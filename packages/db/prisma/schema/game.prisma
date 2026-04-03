@@ -1,0 +1,18 @@
+model Game {
+  id             String    @id @default(cuid())
+  externalApiKey String    @unique @map("external_api_key")
+  title          String
+  coverUrl       String?   @map("cover_url")
+  description    String?
+  releaseDate    DateTime? @map("release_date")
+  trailerUrl     String?   @map("trailer_url")
+  igdbScore      Decimal?  @map("igdb_score")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  genres    Genre[]
+  platforms Platform[]
+  userGames UserGame[]
+  reviews   Review[]
+
+  @@map("game")
+}

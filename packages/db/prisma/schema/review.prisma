@@ -1,0 +1,16 @@
+model Review {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  gameId    String   @map("game_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+  @@map("review")
+}

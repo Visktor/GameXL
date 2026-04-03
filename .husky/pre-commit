@@ -1,5 +1,3 @@
-pnpm test
-
-# ultracite
 #!/bin/sh
+# ultracite
 pnpm dlx lint-staged

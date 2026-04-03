@@ -1,0 +1,7 @@
+model Platform {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
+
+  @@map("platform")
+}
