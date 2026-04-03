@@ -1,0 +1,6 @@
+{
+  "extends": "@GameXL/config/tsconfig.base.json",
+  "compilerOptions": {
+    "strictNullChecks": true
+  }
+}
