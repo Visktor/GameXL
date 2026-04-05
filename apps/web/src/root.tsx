@@ -63,7 +63,9 @@ export default function App() {
 				</div>
 				<Toaster richColors />
 			</ThemeProvider>
-			<ReactQueryDevtools buttonPosition="bottom-right" position="bottom" />
+			{import.meta.env.DEV && (
+				<ReactQueryDevtools buttonPosition="bottom-right" position="bottom" />
+			)}
 		</QueryClientProvider>
 	);
 }
@@ -72,16 +74,20 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 	let message = "Oops!";
 	let details = "An unexpected error occurred.";
 	let stack: string | undefined;
+
 	if (isRouteErrorResponse(error)) {
-		message = error.status === 404 ? "404" : "Error";
-		details =
-			error.status === 404
-				? "The requested page could not be found."
-				: error.statusText || details;
-	} else if (import.meta.env.DEV && error && error instanceof Error) {
+		const is404 = error.status === 404;
+
+		message = is404 ? "404" : "Error";
+
+		details = is404
+			? "The requested page could not be found."
+			: error.statusText;
+	} else if (import.meta.env.DEV && error instanceof Error) {
 		details = error.message;
 		stack = error.stack;
 	}
+
 	return (
 		<main className="container mx-auto p-4 pt-16">
 			<h1>{message}</h1>

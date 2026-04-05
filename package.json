@@ -23,7 +23,11 @@
     "db:down": "turbo -F @GameXL/db db:down",
     "check": "ultracite check",
     "fix": "ultracite fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "turbo check-types",
+    "typecheck:web": "turbo -F web check-types",
+    "typecheck:server": "turbo -F server check-types",
+    "generate": "turbo -F @GameXL/db db:generate"
   },
   "dependencies": {
     "@GameXL/env": "workspace:*",
