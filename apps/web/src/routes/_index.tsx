@@ -2,8 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { trpc } from "@/utils/trpc";
 
-import type { Route } from "./+types/_index";
-
 const TITLE_TEXT = `
  ██████╗ ███████╗████████╗████████╗███████╗██████╗
  ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
@@ -19,13 +17,6 @@ const TITLE_TEXT = `
     ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
     ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
  `;
-
-export function meta(_: Route.MetaArgs) {
-	return [
-		{ title: "GameXL" },
-		{ name: "description", content: "GameXL is a web application" },
-	];
-}
 
 export default function Home() {
 	const healthCheck = useQuery(trpc.healthCheck.queryOptions());
