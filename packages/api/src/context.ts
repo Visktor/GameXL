@@ -1,13 +1,11 @@
 import { auth } from "@GameXL/auth";
-import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import { fromNodeHeaders } from "better-auth/node";
+import type { Context as HonoContext } from "hono";
 
-export async function createContext(opts: CreateExpressContextOptions) {
+export async function createContext(c: HonoContext) {
 	const session = await auth.api.getSession({
-		headers: fromNodeHeaders(opts.req.headers),
+		headers: c.req.raw.headers,
 	});
 	return {
-		auth: null,
 		session,
 	};
 }

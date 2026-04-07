@@ -1,112 +1,138 @@
 # GameXL
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, React Router, Express, TRPC, and more.
+A game tracking platform — think MyAnimeList, but for games.
 
-## Features
+Built on [better-t-stack](https://better-t-stack.dev): a pnpm monorepo with React, Expo, Hono, tRPC, Prisma, and better-auth.
 
-- **TypeScript** - For type safety and improved developer experience
-- **React Router** - Declarative routing for React
-- **React Native** - Build mobile apps using React
-- **Expo** - Tools for React Native development
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Express** - Fast, unopinionated web framework
-- **tRPC** - End-to-end type-safe APIs
-- **Node.js** - Runtime environment
-- **Prisma** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Biome** - Linting and formatting
-- **Husky** - Git hooks for code quality
-- **Turborepo** - Optimized monorepo build system
+---
 
-## Getting Started
+## Prerequisites
 
-First, install the dependencies:
+- [Node.js](https://nodejs.org) `^20.19 || ^22.12`
+- [pnpm](https://pnpm.io) `>=10`
+- [Docker](https://www.docker.com) (for the database)
+
+---
+
+## Getting started
+
+### 1. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-## Database Setup
+### 2. Set up environment variables
 
-This project uses PostgreSQL with Prisma.
+Create the following `.env` files by copying the examples below.
 
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
+#### `apps/server/.env`
 
-3. Apply the schema to your database:
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5433/GameXL
 
-```bash
-pnpm run db:push
+BETTER_AUTH_SECRET=        # generate with: openssl rand -base64 32
+BETTER_AUTH_URL=http://localhost:3000
+
+CORS_ORIGIN=http://localhost:5180
 ```
 
-Then, run the development server:
+#### `apps/web/.env`
 
-```bash
-pnpm run dev
+```env
+VITE_SERVER_URL=http://localhost:3000
+PORT=5180
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser to see the web application.
-Use the Expo Go app to run the mobile application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+#### `apps/native/.env`
 
-## UI Customization
-
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+```env
+EXPO_PUBLIC_SERVER_URL=http://localhost:3000
 ```
 
-Import shared components like this:
+### 3. Start the database
+
+```bash
+pnpm db:start
+```
+
+This starts a PostgreSQL container on port **5433** via Docker Compose.
+
+### 4. Run database migrations
+
+```bash
+pnpm db:migrate
+```
+
+This applies all Prisma migrations and creates the required tables, including the better-auth schema (users, sessions, accounts, verifications).
+
+### 5. Start the apps
+
+Run each in a separate terminal, or all together:
+
+```bash
+# All at once
+pnpm dev
+
+# Individually
+pnpm dev:server   # Hono API on http://localhost:3000
+pnpm dev:web      # React web app on http://localhost:5180
+pnpm dev:native   # Expo app
+```
+
+---
+
+## Project structure
+
+```
+apps/
+  web/        React 19 SPA — Vite, React Router v7, TailwindCSS v4, tRPC, better-auth
+  native/     Expo React Native app
+  server/     Hono server — tRPC, better-auth, Node.js
+
+packages/
+  api/        tRPC router and context
+  auth/       better-auth instance (Prisma adapter + Expo plugin)
+  db/         Prisma schema and migrations (PostgreSQL)
+  env/        Environment variable validation (@t3-oss/env-core)
+  ui/         Shared UI components (shadcn/ui + TailwindCSS)
+  config/     Shared tooling config (Ultracite / Biome)
+```
+
+---
+
+## UI customization
+
+Shared primitives live in `packages/ui`. To add more shadcn/ui components:
+
+```bash
+npx shadcn@latest add <component> -c packages/ui
+```
+
+Import them anywhere in the monorepo:
 
 ```tsx
 import { Button } from "@GameXL/ui/components/button";
 ```
 
-### Add app-specific blocks
+For app-specific components, run the shadcn CLI from the app directory instead.
 
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
+---
 
-## Git Hooks and Formatting
+## Useful commands
 
-- Initialize hooks: `pnpm run prepare`
-- Format and lint fix: `pnpm run check`
-
-## Project Structure
-
-```
-GameXL/
-├── apps/
-│   ├── web/         # Frontend application (React + React Router)
-│   ├── native/      # Mobile application (React Native, Expo)
-│   └── server/      # Backend API (Express, TRPC)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run dev:web`: Start only the web application
-- `pnpm run dev:server`: Start only the server
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run dev:native`: Start the React Native/Expo development server
-- `pnpm run db:push`: Push schema changes to database
-- `pnpm run db:generate`: Generate database client/types
-- `pnpm run db:migrate`: Run database migrations
-- `pnpm run db:studio`: Open database studio UI
-- `pnpm run check`: Run Biome formatting and linting
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start all apps in parallel |
+| `pnpm dev:web` | Start web app only |
+| `pnpm dev:server` | Start API server only |
+| `pnpm dev:native` | Start Expo app only |
+| `pnpm db:start` | Start PostgreSQL via Docker |
+| `pnpm db:stop` | Stop the database container |
+| `pnpm db:migrate` | Run Prisma migrations |
+| `pnpm db:generate` | Regenerate Prisma client |
+| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm build` | Build all apps |
+| `pnpm check` | Lint and format check (Biome) |
+| `pnpm fix` | Auto-fix lint and formatting |
+| `pnpm typecheck` | Type-check all packages |

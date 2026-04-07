@@ -13,7 +13,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate",
+    "postinstall": "pnpm exec prisma generate",
     "db:studio": "prisma studio",
     "db:start": "docker compose up -d",
     "db:watch": "docker compose up",

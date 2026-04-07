@@ -2,38 +2,35 @@ import { createContext } from "@GameXL/api/context";
 import { appRouter } from "@GameXL/api/routers/index";
 import { auth } from "@GameXL/auth";
 import { env } from "@GameXL/env/server";
-import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { toNodeHandler } from "better-auth/node";
-import cors from "cors";
-import express from "express";
+import { serve } from "@hono/node-server";
+import { trpcServer } from "@hono/trpc-server";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-const app = express();
+const app = new Hono();
 
 app.use(
+	"*",
 	cors({
 		origin: env.CORS_ORIGIN,
-		methods: ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-		allowedHeaders: ["*"],
+		allowMethods: ["GET", "POST", "OPTIONS"],
+		allowHeaders: ["Content-Type", "Authorization"],
 		credentials: true,
 	})
 );
 
-app.all("/api/auth{/*path}", toNodeHandler(auth));
+app.on(["GET", "POST"], "/api/auth/**", (c) => auth.handler(c.req.raw));
 
 app.use(
-	"/trpc",
-	createExpressMiddleware({
+	"/trpc/*",
+	trpcServer({
 		router: appRouter,
-		createContext,
+		createContext: (_opts, c) => createContext(c),
 	})
 );
 
-app.use(express.json());
+app.get("/", (c) => c.text("OK"));
 
-app.get("/", (_req, res) => {
-	res.status(200).send("OK");
-});
-
-app.listen(3000, () => {
+serve({ fetch: app.fetch, port: 3000 }, () => {
 	console.log("Server is running on http://localhost:3000");
 });
