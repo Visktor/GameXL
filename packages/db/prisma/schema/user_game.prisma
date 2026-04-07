@@ -7,18 +7,22 @@ enum GameStatus {
 }
 
 model UserGame {
-  id        String     @id @default(cuid())
-  userId    String     @map("user_id")
-  gameId    String     @map("game_id")
-  status    GameStatus
-  score     Decimal?
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  id             String     @id @default(cuid())
+  userId         String?    @map("user_id")
+  guestSessionId String?    @map("guest_session_id")
+  gameId         String     @map("game_id")
+  status         GameStatus
+  score          Decimal?
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestSession GuestSession? @relation(fields: [guestSessionId], references: [id], onDelete: Cascade)
+  game         Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
+  @@unique([guestSessionId, gameId])
   @@index([userId])
+  @@index([guestSessionId])
   @@map("user_game")
 }

@@ -1,6 +1,7 @@
 import { Toaster } from "@GameXL/ui/components/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useEffect } from "react";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 
 import "./index.css";
@@ -9,9 +10,16 @@ import Header from "./components/header";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import Login from "./routes/login/login";
+import { useSessionStore } from "./stores/session-store";
 import { queryClient } from "./utils/trpc";
 
 function RootLayout() {
+	const initFingerprint = useSessionStore((s) => s.initFingerprint);
+
+	useEffect(() => {
+		initFingerprint();
+	}, [initFingerprint]);
+
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ThemeProvider

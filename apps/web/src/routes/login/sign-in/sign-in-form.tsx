@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { trpcClient } from "@/utils/trpc";
 
 import Loader from "../../../components/loader";
 
@@ -30,7 +31,8 @@ export default function SignInForm({
 					password: value.password,
 				},
 				{
-					onSuccess: () => {
+					onSuccess: async () => {
+						await trpcClient.guestSession.invalidate.mutate();
 						navigate("/");
 						toast.success("Sign in successful");
 					},

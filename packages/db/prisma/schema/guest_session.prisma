@@ -1,0 +1,11 @@
+model GuestSession {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  fingerprint String    @unique
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  userGames UserGame[]
+
+  @@map("guest_session")
+}

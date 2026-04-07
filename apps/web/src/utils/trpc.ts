@@ -4,6 +4,7 @@ import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
+import { useSessionStore } from "@/stores/session-store";
 
 export const queryClient = new QueryClient({
 	queryCache: new QueryCache({
@@ -22,6 +23,10 @@ export const trpcClient = createTRPCClient<AppRouter>({
 	links: [
 		httpBatchLink({
 			url: `${env.VITE_SERVER_URL}/trpc`,
+			headers() {
+				const { fingerprint } = useSessionStore.getState();
+				return fingerprint ? { "x-fingerprint": fingerprint } : {};
+			},
 			fetch(url, options) {
 				return fetch(url, {
 					...options,

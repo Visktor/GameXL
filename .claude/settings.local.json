@@ -6,7 +6,8 @@
       "WebFetch(domain:trpc.io)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.robinwieruch.de)",
-      "WebFetch(domain:dev.to)"
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:context7.com)"
     ]
   }
 }
