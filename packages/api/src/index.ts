@@ -37,6 +37,7 @@ export const guestProcedure = t.procedure.use(async ({ ctx, next }) => {
 
 	if (!guestSession) {
 		const fingerprint = ctx.honoContext.req.header("x-fingerprint");
+
 		if (!fingerprint) {
 			throw new TRPCError({
 				code: "UNAUTHORIZED",

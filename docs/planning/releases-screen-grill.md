@@ -1,5 +1,16 @@
 # Releases Screen — Grill Session
 
+## Layout
+
+9. Q: Time span selector — horizontal tabs or left sidebar (vertical)?
+   R: Left sidebar (vertical), per mockup.
+   -> A: Q: Featured hero game section at top of mockup — real feature or mockup artifact?
+         R: Ignore. Mockup only.
+   -> B: Q: Grid/list toggle on releases screen?
+         R: V2. Grid only for now.
+   -> C: Q: Nav items from mockup (LIBRARY, COMMUNITY, PRO) — include or ignore?
+         R: Ignore. Discussed decisions take priority over mockup.
+
 ## Page Meta
 
 8. Q: Page <title>?
@@ -19,6 +30,8 @@
 
 5. Q: Search bar — always visible or behind icon?
    R: Always visible.
+   -> A: Q: Logo/wordmark in header + keep ModeToggle?
+         R: No logo yet (visual identity TBD). Keep header as-is.
 
 ## Time Span Tabs
 

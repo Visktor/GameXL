@@ -1,0 +1,7 @@
+model OAuthToken {
+  key       String   @id
+  value     String
+  expiresAt DateTime
+
+  @@map("oauth_token")
+}
