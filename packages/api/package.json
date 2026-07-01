@@ -18,11 +18,13 @@
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
+    "luxon": "^3.7.2",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@GameXL/config": "workspace:*",
     "@types/express": "catalog:",
+    "@types/luxon": "^3.7.2",
     "typescript": "^5"
   }
 }

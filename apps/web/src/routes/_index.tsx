@@ -1,6 +1,15 @@
 import { Skeleton } from "@GameXL/ui/components/skeleton";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Calendar, CalendarDays, CalendarRange, Clock } from "lucide-react";
+import {
+	ArrowDownUp,
+	Calendar,
+	CalendarDays,
+	CalendarRange,
+	Clock,
+	Star,
+	TrendingUp,
+	Trophy,
+} from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 
@@ -14,18 +23,27 @@ const SPANS = [
 	{ key: "year", label: "This Year", icon: CalendarRange },
 ] as const;
 
+const SORTS = [
+	{ key: "popularity", label: "Popularity", icon: TrendingUp },
+	{ key: "date", label: "Release Date", icon: ArrowDownUp },
+	{ key: "rating", label: "Rating", icon: Star },
+	{ key: "score", label: "Top Score", icon: Trophy },
+] as const;
+
 type Span = (typeof SPANS)[number]["key"];
+type SortBy = (typeof SORTS)[number]["key"];
 
 export default function ReleasesPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const span: Span = (searchParams.get("span") ?? "today") as Span;
+	const sortBy: SortBy = (searchParams.get("sortBy") ?? "popularity") as SortBy;
 	const bottomRef = useRef<HTMLDivElement>(null);
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
 		useInfiniteQuery({
-			queryKey: ["releases", span],
+			queryKey: ["releases", span, sortBy],
 			queryFn: ({ pageParam }) =>
-				trpcClient.releases.list.query({ span, offset: pageParam }),
+				trpcClient.releases.list.query({ span, sortBy, offset: pageParam }),
 			initialPageParam: 0,
 			getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
 		});
@@ -61,7 +79,22 @@ export default function ReleasesPage() {
 							span === key ? "bg-accent font-medium" : "text-muted-foreground"
 						}`}
 						key={key}
-						onClick={() => setSearchParams({ span: key })}
+						onClick={() => setSearchParams({ span: key, sortBy })}
+						type="button"
+					>
+						<Icon className="h-4 w-4 shrink-0" />
+						{label}
+					</button>
+				))}
+				<div className="my-2 border-t" />
+				<p className="px-3 pb-1 text-muted-foreground text-xs">Sort by</p>
+				{SORTS.map(({ key, label, icon: Icon }) => (
+					<button
+						className={`flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
+							sortBy === key ? "bg-accent font-medium" : "text-muted-foreground"
+						}`}
+						key={key}
+						onClick={() => setSearchParams({ span, sortBy: key })}
 						type="button"
 					>
 						<Icon className="h-4 w-4 shrink-0" />
@@ -73,7 +106,7 @@ export default function ReleasesPage() {
 			{/* Main content */}
 			<main className="flex-1 overflow-y-auto p-4">
 				{status === "pending" && (
-					<div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
 						{Array.from({ length: 20 }).map((_, i) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
 							<div key={i}>
@@ -101,7 +134,7 @@ export default function ReleasesPage() {
 				)}
 
 				{status === "success" && games.length > 0 && (
-					<div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+					<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
 						{games.map((game) => (
 							<GameCard game={game} key={game.igdbId} />
 						))}

@@ -5,15 +5,15 @@ import {
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
 import { useMutation } from "@tanstack/react-query";
-import { Gamepad2, Heart, Star, Trash2 } from "lucide-react";
+import { Gamepad2, Heart, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
+import { StarRating } from "@/components/star-rating";
 import { trpcClient } from "@/utils/trpc";
 
 export interface ReleaseGame {
 	coverUrl: string | null;
-	gamexlAvgScore: number | null;
 	igdbId: string;
 	igdbScore: number | null;
 	releaseDate: number | null;
@@ -72,15 +72,20 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 					)}
 				</div>
 				<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
+				{game.igdbScore !== null && (
+					<div className="mt-1">
+						<StarRating score={game.igdbScore} />
+					</div>
+				)}
 			</HoverCardTrigger>
-			<HoverCardContent className="w-72 p-0" side="right">
+			<HoverCardContent className="w-140 p-0" side="right">
 				{/* Video or cover art */}
 				<div className="aspect-video w-full overflow-hidden rounded-t-sm bg-muted">
 					{game.trailerVideoId ? (
 						<iframe
 							allow="autoplay; encrypted-media"
 							className="h-full w-full"
-							src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=0`}
+							src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=1`}
 							title={game.title}
 						/>
 					) : null}
@@ -107,18 +112,6 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 								IGDB{" "}
 								<span className="font-medium text-foreground">
 									{Math.round(game.igdbScore)}
-								</span>
-							</span>
-						)}
-						{game.gamexlAvgScore === null ? (
-							<span className="text-muted-foreground text-xs">
-								No GameXL score
-							</span>
-						) : (
-							<span className="flex items-center gap-1 text-muted-foreground">
-								<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-								<span className="font-medium text-foreground">
-									{game.gamexlAvgScore.toFixed(1)}
 								</span>
 							</span>
 						)}

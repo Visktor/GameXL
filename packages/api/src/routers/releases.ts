@@ -1,55 +1,39 @@
 import db from "@GameXL/db";
 import { TRPCError } from "@trpc/server";
+import { DateTime } from "luxon";
 import { z } from "zod";
 import { publicProcedure, router } from "../index";
 import { queryIGDB } from "../lib/igdb";
+import { buildPage, paginationInput } from "../utils/pagination";
 
 const spanSchema = z.enum(["today", "week", "month", "year"]);
+const sortBySchema = z.enum(["date", "rating", "popularity", "score"]);
+
+const IGDB_SORT: Record<z.infer<typeof sortBySchema>, string> = {
+	date: "first_release_date desc",
+	rating: "rating desc",
+	popularity: "rating_count desc",
+	score: "total_rating desc",
+};
 
 function getTimeRange(span: z.infer<typeof spanSchema>): {
 	start: number;
 	end: number;
 } {
-	const now = new Date();
-	const y = now.getFullYear();
-	const m = now.getMonth();
-	const d = now.getDate();
+	const now = DateTime.now();
 
-	if (span === "today") {
-		const start = new Date(y, m, d);
-		const end = new Date(y, m, d + 1);
-		return {
-			start: Math.floor(start.getTime() / 1000),
-			end: Math.floor(end.getTime() / 1000) - 1,
-		};
-	}
+	const ranges: Record<typeof span, { start: DateTime; end: DateTime }> = {
+		today: { start: now.startOf("day"), end: now.endOf("day") },
+		week: { start: now.startOf("week"), end: now.endOf("week") },
+		month: { start: now.startOf("month"), end: now.endOf("month") },
+		year: { start: now.startOf("year"), end: now.endOf("year") },
+	};
 
-	if (span === "week") {
-		const day = now.getDay(); // 0 = Sunday
-		const monday = new Date(y, m, d - (day === 0 ? 6 : day - 1));
-		const sunday = new Date(monday);
-		sunday.setDate(sunday.getDate() + 7);
-		return {
-			start: Math.floor(monday.getTime() / 1000),
-			end: Math.floor(sunday.getTime() / 1000) - 1,
-		};
-	}
+	const { start, end } = ranges[span];
 
-	if (span === "month") {
-		const start = new Date(y, m, 1);
-		const end = new Date(y, m + 1, 1);
-		return {
-			start: Math.floor(start.getTime() / 1000),
-			end: Math.floor(end.getTime() / 1000) - 1,
-		};
-	}
-
-	// year
-	const start = new Date(y, 0, 1);
-	const end = new Date(y + 1, 0, 1);
 	return {
-		start: Math.floor(start.getTime() / 1000),
-		end: Math.floor(end.getTime() / 1000) - 1,
+		start: Math.floor(start.toSeconds()),
+		end: Math.floor(end.toSeconds()),
 	};
 }
 
@@ -68,20 +52,22 @@ export const releasesRouter = router({
 	list: publicProcedure
 		.input(
 			z.object({
+				...paginationInput.shape,
 				span: spanSchema,
-				offset: z.number().int().min(0).default(0),
+				sortBy: sortBySchema.default("popularity"),
 			})
 		)
 		.query(async ({ input, ctx }) => {
 			const { start, end } = getTimeRange(input.span);
-
+			const sort = IGDB_SORT[input.sortBy];
 			let igdbGames: IGDBGame[];
+
 			try {
 				igdbGames = await queryIGDB<IGDBGame[]>(
 					"games",
-					`fields id, name, cover.url, first_release_date, rating, videos.video_id;
+					`fields id, name, cover.url, first_release_date, rating, rating_count, total_rating, videos.video_id;
 					 where first_release_date >= ${start} & first_release_date <= ${end};
-					 sort first_release_date desc;
+					 sort ${sort};
 					 limit ${PAGE_SIZE};
 					 offset ${input.offset};`
 				);
@@ -98,31 +84,8 @@ export const releasesRouter = router({
 
 			const igdbIds = igdbGames.map((g) => String(g.id));
 
-			// Fetch GameXL avg scores for games we have in our DB
-			const dbGames = await db.game.findMany({
-				where: { externalApiKey: { in: igdbIds } },
-				select: {
-					externalApiKey: true,
-					userGames: {
-						where: { score: { not: null } },
-						select: { score: true },
-					},
-				},
-			});
-
-			const avgScoreMap = new Map<string, number | null>();
-			for (const g of dbGames) {
-				const scores = g.userGames.map((ug) => Number(ug.score));
-				avgScoreMap.set(
-					g.externalApiKey,
-					scores.length
-						? scores.reduce((a, b) => a + b, 0) / scores.length
-						: null
-				);
-			}
-
-			// Fetch tracked status for current user or guest
 			const trackedMap = new Map<string, string>();
+
 			if (ctx.session || ctx.guestSession) {
 				const trackedGames = await db.userGame.findMany({
 					where: {
@@ -155,15 +118,11 @@ export const releasesRouter = router({
 					trailerVideoId: g.videos?.[0]?.video_id ?? null,
 					releaseDate: g.first_release_date ?? null,
 					igdbScore: g.rating ?? null,
-					gamexlAvgScore: avgScoreMap.get(igdbId) ?? null,
 					trackedStatus: trackedMap.get(igdbId) ?? null,
 				};
 			});
 
-			return {
-				games,
-				nextOffset:
-					igdbGames.length === PAGE_SIZE ? input.offset + PAGE_SIZE : null,
-			};
+			const { nextOffset } = buildPage(igdbGames, PAGE_SIZE, input.offset);
+			return { games, nextOffset };
 		}),
 });

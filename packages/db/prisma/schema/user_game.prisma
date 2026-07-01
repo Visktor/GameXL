@@ -12,7 +12,6 @@ model UserGame {
   guestSessionId String?    @map("guest_session_id")
   gameId         String     @map("game_id")
   status         GameStatus
-  score          Decimal?
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
