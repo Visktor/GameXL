@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const DEFAULT_PAGE_SIZE = 20;
+
 export const paginationInput = z.object({
 	offset: z.number().int().min(0).default(0),
 });

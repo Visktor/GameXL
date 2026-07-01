@@ -8,6 +8,29 @@ interface TwitchTokenResponse {
 	expires_in: number;
 }
 
+export interface IGDBGame {
+	cover?: { url: string };
+	first_release_date?: number;
+	id: number;
+	name: string;
+	rating?: number;
+	videos?: { name?: string; video_id: string }[];
+}
+
+export function resolveCoverUrl(game: IGDBGame): string | null {
+	return game.cover?.url
+		? `https:${game.cover.url.replace("t_thumb", "t_cover_big")}`
+		: null;
+}
+
+export function resolveTrailerVideoId(game: IGDBGame): string | null {
+	const gameplayVideo = game.videos?.find((v) =>
+		v.name?.toLowerCase().includes("gameplay")
+	)?.video_id;
+	const firstVideo = game.videos?.[0]?.video_id;
+	return gameplayVideo ?? firstVideo ?? null;
+}
+
 async function getToken(): Promise<string> {
 	const stored = await db.oAuthToken.findUnique({
 		where: { key: TWITCH_TOKEN_KEY },
