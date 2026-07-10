@@ -64,6 +64,10 @@ export const guestProcedure = t.procedure.use(async ({ ctx, next }) => {
 				data: { fingerprint, token },
 				select: { id: true, token: true, fingerprint: true },
 			});
+			ctx.logger.info(
+				{ event: "guestSession.created", guestSessionId: guestSession.id },
+				"Guest session created"
+			);
 		}
 
 		setCookie(ctx.honoContext, GUEST_SESSION_COOKIE, token, {

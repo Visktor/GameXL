@@ -14,6 +14,7 @@
     "@GameXL/auth": "workspace:*",
     "@GameXL/db": "workspace:*",
     "@GameXL/env": "workspace:*",
+    "@GameXL/logger": "workspace:*",
     "@hono/node-server": "^1.14.4",
     "@hono/trpc-server": "^0.4.0",
     "@trpc/server": "catalog:",

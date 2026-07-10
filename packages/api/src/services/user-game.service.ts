@@ -12,7 +12,7 @@ export async function trackGame({
 	ctx,
 }: {
 	input: TrackGameInput;
-	ctx: Pick<Context, "session" | "guestSession">;
+	ctx: Pick<Context, "session" | "guestSession" | "logger">;
 }) {
 	const { gameData, status } = input;
 
@@ -49,6 +49,11 @@ export async function trackGame({
 			update: { status },
 		});
 	}
+
+	ctx.logger.info(
+		{ event: "game.tracked", gameId: game.id, status },
+		"Game tracked"
+	);
 }
 
 export async function removeGame({

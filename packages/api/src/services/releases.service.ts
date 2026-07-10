@@ -32,7 +32,7 @@ export async function listReleases({
 	ctx,
 }: {
 	input: ListReleasesInput;
-	ctx: Pick<Context, "session" | "guestSession">;
+	ctx: Pick<Context, "session" | "guestSession" | "logger">;
 }) {
 	const { start, end } = getTimeRange(input.span);
 	const sort = IGDB_SORT[input.sortBy];
@@ -47,7 +47,11 @@ export async function listReleases({
 			 limit ${DEFAULT_PAGE_SIZE};
 			 offset ${input.offset};`
 		);
-	} catch {
+	} catch (err) {
+		ctx.logger.error(
+			{ err, span: input.span },
+			"Failed to fetch releases from IGDB"
+		);
 		throw new TRPCError({
 			code: "INTERNAL_SERVER_ERROR",
 			message: "Failed to fetch releases from IGDB",

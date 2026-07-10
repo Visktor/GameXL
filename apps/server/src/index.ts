@@ -2,12 +2,15 @@ import { createContext } from "@GameXL/api/context";
 import { appRouter } from "@GameXL/api/routers/index";
 import { auth } from "@GameXL/auth";
 import { env } from "@GameXL/env/server";
+import { Logger, type RequestVariables } from "@GameXL/logger";
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-const app = new Hono();
+const app = new Hono<{ Variables: RequestVariables }>();
+
+app.use("*", Logger.requestMiddleware());
 
 app.use(
 	"*",
@@ -32,5 +35,5 @@ app.use(
 app.get("/", (c) => c.text("OK"));
 
 serve({ fetch: app.fetch, port: 3000 }, () => {
-	console.log("Server is running on http://localhost:3000");
+	Logger.info("Server is running on http://localhost:3000");
 });
