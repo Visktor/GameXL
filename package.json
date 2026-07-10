@@ -24,6 +24,7 @@
     "check": "ultracite check",
     "fix": "ultracite fix",
     "prepare": "husky",
+    "test": "turbo test",
     "typecheck": "turbo check-types",
     "typecheck:web": "turbo -F web check-types",
     "typecheck:server": "turbo -F server check-types",
@@ -42,7 +43,9 @@
     "lint-staged": "latest",
     "turbo": "^2.8.12",
     "typescript": "^5",
-    "ultracite": "7.4.3"
+    "ultracite": "7.4.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.1.10"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
