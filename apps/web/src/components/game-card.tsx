@@ -6,10 +6,10 @@ import {
 } from "@GameXL/ui/components/hover-card";
 import { useMutation } from "@tanstack/react-query";
 import { Gamepad2, Heart, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { Link } from "react-router";
 
 import { StarRating } from "@/components/star-rating";
+import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
 export interface ReleaseGame {
@@ -23,7 +23,10 @@ export interface ReleaseGame {
 }
 
 export function GameCard({ game }: { game: ReleaseGame }) {
-	const [trackedStatus, setTrackedStatus] = useState(game.trackedStatus);
+	const trackedStatus = useTrackedGamesStore(
+		(state) => state.statusByGameId[game.igdbId] ?? game.trackedStatus
+	);
+	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 
 	const addMutation = useMutation({
 		mutationFn: (status: "PLAYING" | "WANT") =>
@@ -38,15 +41,15 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 				},
 				status,
 			}),
-		onMutate: (status) => setTrackedStatus(status),
-		onError: () => setTrackedStatus(game.trackedStatus),
+		onMutate: (status) => setTrackedStatus(game.igdbId, status),
+		onError: () => setTrackedStatus(game.igdbId, game.trackedStatus),
 	});
 
 	const removeMutation = useMutation({
 		mutationFn: () =>
 			trpcClient.userGame.remove.mutate({ igdbId: game.igdbId }),
-		onMutate: () => setTrackedStatus(null),
-		onError: () => setTrackedStatus(game.trackedStatus),
+		onMutate: () => setTrackedStatus(game.igdbId, null),
+		onError: () => setTrackedStatus(game.igdbId, game.trackedStatus),
 	});
 
 	return (

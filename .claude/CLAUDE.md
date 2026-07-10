@@ -55,6 +55,15 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
   - Include keyboard event handlers alongside mouse events
   - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
 
+### State Management
+
+- `useState` is for **UI-local** state only: toggles, hover/focus flags, open/closed, input focus — state with no meaning outside the component.
+- **Business/domain state** (tracked/entity status, filters, search query, selections, anything tied to app data or synced with the backend) must NOT live in `useState`. Move it to a zustand slice in `apps/web/src/stores/`.
+  - Check `apps/web/src/stores/` first for an existing slice covering the domain (e.g. `search-store.ts`, `session-store.ts`, `tracked-games-store.ts`) before creating a new one.
+  - If the state is per-entity (keyed by id) and multiple components may render the same entity, key the store by id (`Record<string, T>`) instead of storing a single value — otherwise instances desync (see `tracked-games-store.ts`).
+  - One `create()` call per feature/domain slice, flat `/stores` directory, no barrel file — matches existing convention.
+  - Never store server data itself in zustand (that's TanStack Query's job) — only client-side/optimistic state derived from it.
+
 ### Error Handling & Debugging
 
 - Remove `console.log`, `debugger`, and `alert` statements from production code
