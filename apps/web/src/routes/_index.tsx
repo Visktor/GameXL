@@ -19,7 +19,7 @@ import { trpcClient } from "@/utils/trpc";
 const SPANS = [
 	{ key: "today", label: "Today", icon: Clock },
 	{ key: "week", label: "This Week", icon: Calendar },
-	{ key: "month", label: "This Month", icon: CalendarDays },
+	{ key: "month", label: "30 Days", icon: CalendarDays },
 	{ key: "year", label: "This Year", icon: CalendarRange },
 ] as const;
 

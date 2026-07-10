@@ -10,6 +10,7 @@ import Header from "./components/header";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import Login from "./routes/login/login";
+import Search from "./routes/search";
 import { useSessionStore } from "./stores/session-store";
 import { queryClient } from "./utils/trpc";
 
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
 		children: [
 			{ index: true, element: <Home /> },
 			{ path: "/login", element: <Login /> },
+			{ path: "/search", element: <Search /> },
 		],
 	},
 ]);

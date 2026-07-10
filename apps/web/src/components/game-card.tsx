@@ -85,7 +85,7 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 						<iframe
 							allow="autoplay; encrypted-media"
 							className="h-full w-full"
-							src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=1`}
+							src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=3`}
 							title={game.title}
 						/>
 					) : null}

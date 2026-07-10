@@ -1,6 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { guestSessionRouter } from "./guest-session";
 import { releasesRouter } from "./releases";
+import { searchRouter } from "./search";
 import { userGameRouter } from "./user-game";
 
 export const appRouter = router({
@@ -15,6 +16,7 @@ export const appRouter = router({
 	}),
 	guestSession: guestSessionRouter,
 	releases: releasesRouter,
+	search: searchRouter,
 	userGame: userGameRouter,
 });
 export type AppRouter = typeof appRouter;
