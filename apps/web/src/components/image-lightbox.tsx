@@ -10,7 +10,7 @@ const NAV_BUTTON_CLASSNAME =
 	"-translate-y-1/2 absolute top-1/2 rounded-full bg-background/80 p-2 text-foreground opacity-90 outline-hidden transition-opacity hover:opacity-100";
 
 interface ImageLightboxProps {
-	image?: { alt: string; height: number; url: string; width: number };
+	image?: { alt: string; url: string };
 	imageCount: number;
 	onNavigate: (direction: -1 | 1) => void;
 	onOpenChange: (open: boolean) => void;
@@ -41,18 +41,17 @@ export function ImageLightbox({
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
 			<DialogContent
-				className="w-fit max-w-[95vw] border-none bg-transparent p-0 shadow-none ring-0"
+				className="inset-0 flex h-full max-w-none translate-x-0 translate-y-0 items-center justify-center border-none bg-transparent p-0 shadow-none ring-0"
 				onKeyDown={handleKeyDown}
 				showCloseButton={false}
 			>
 				{image && (
 					<>
+						{/* biome-ignore lint/correctness/useImageSize: dimensions vary per screenshot and aren't known before load; rendered inside a fixed overlay, so no layout shift occurs */}
 						<img
 							alt={image.alt}
-							className="max-h-[85vh] max-w-full rounded-sm object-contain"
-							height={image.height}
+							className="max-h-[85vh] max-w-[95vw] rounded-sm"
 							src={image.url}
-							width={image.width}
 						/>
 						<DialogClose
 							aria-label="Close"

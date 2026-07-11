@@ -1,8 +1,6 @@
 export interface LightboxImage {
 	alt: string;
-	height: number;
 	url: string;
-	width: number;
 }
 
 export type LightboxTarget =
