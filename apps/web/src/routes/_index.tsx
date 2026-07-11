@@ -6,6 +6,8 @@ import {
 	CalendarDays,
 	CalendarRange,
 	Clock,
+	LayoutGrid,
+	List,
 	Star,
 	TrendingUp,
 	Trophy,
@@ -14,6 +16,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 
 import { GameCard } from "@/components/game-card";
+import { useViewPreferenceStore } from "@/stores/view-preference-store";
 import { trpcClient } from "@/utils/trpc";
 
 const SPANS = [
@@ -30,6 +33,11 @@ const SORTS = [
 	{ key: "score", label: "Top Score", icon: Trophy },
 ] as const;
 
+const LAYOUTS = [
+	{ key: "grid", label: "Grid", icon: LayoutGrid },
+	{ key: "list", label: "List", icon: List },
+] as const;
+
 type Span = (typeof SPANS)[number]["key"];
 type SortBy = (typeof SORTS)[number]["key"];
 
@@ -38,6 +46,8 @@ export default function ReleasesPage() {
 	const span: Span = (searchParams.get("span") ?? "today") as Span;
 	const sortBy: SortBy = (searchParams.get("sortBy") ?? "popularity") as SortBy;
 	const bottomRef = useRef<HTMLDivElement>(null);
+	const layout = useViewPreferenceStore((s) => s.layout);
+	const setLayout = useViewPreferenceStore((s) => s.setLayout);
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
 		useInfiniteQuery({
@@ -101,17 +111,44 @@ export default function ReleasesPage() {
 						{label}
 					</button>
 				))}
+				<div className="my-2 border-t" />
+				<p className="px-3 pb-1 text-muted-foreground text-xs">View</p>
+				{LAYOUTS.map(({ key, label, icon: Icon }) => (
+					<button
+						className={`flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
+							layout === key ? "bg-accent font-medium" : "text-muted-foreground"
+						}`}
+						key={key}
+						onClick={() => setLayout(key)}
+						type="button"
+					>
+						<Icon className="h-4 w-4 shrink-0" />
+						{label}
+					</button>
+				))}
 			</aside>
 
 			{/* Main content */}
 			<main className="flex-1 overflow-y-auto p-4">
-				{status === "pending" && (
+				{status === "pending" && layout === "grid" && (
 					<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
 						{Array.from({ length: 20 }).map((_, i) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
 							<div key={i}>
 								<Skeleton className="aspect-[3/4] w-full rounded-sm" />
 								<Skeleton className="mt-1 h-4 w-3/4" />
+							</div>
+						))}
+					</div>
+				)}
+
+				{status === "pending" && layout === "list" && (
+					<div className="flex flex-col">
+						{Array.from({ length: 12 }).map((_, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
+							<div className="flex items-center gap-3 border-b py-2" key={i}>
+								<Skeleton className="aspect-3/4 h-16 w-12 shrink-0 rounded-sm" />
+								<Skeleton className="h-4 w-1/3" />
 							</div>
 						))}
 					</div>
@@ -134,9 +171,15 @@ export default function ReleasesPage() {
 				)}
 
 				{status === "success" && games.length > 0 && (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+					<div
+						className={
+							layout === "grid"
+								? "grid grid-cols-2 gap-4 sm:grid-cols-5"
+								: "flex flex-col"
+						}
+					>
 						{games.map((game) => (
-							<GameCard game={game} key={game.igdbId} />
+							<GameCard game={game} key={game.igdbId} layout={layout} />
 						))}
 					</div>
 				)}

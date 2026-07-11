@@ -22,7 +22,14 @@ export interface ReleaseGame {
 	trailerVideoId: string | null;
 }
 
-export function GameCard({ game }: { game: ReleaseGame }) {
+export function GameCard({
+	game,
+	layout = "grid",
+}: {
+	game: ReleaseGame;
+	layout?: "grid" | "list";
+}) {
+	const isList = layout === "list";
 	const trackedStatus = useTrackedGamesStore(
 		(state) => state.statusByGameId[game.igdbId] ?? game.trackedStatus
 	);
@@ -57,9 +64,22 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 			<HoverCardTrigger
 				closeDelay={150}
 				delay={300}
-				render={<Link className="group block" to={`/games/${game.igdbId}`} />}
+				render={
+					<Link
+						className={
+							isList
+								? "group flex items-center gap-3 border-b py-2 last:border-b-0"
+								: "group block"
+						}
+						to={`/games/${game.igdbId}`}
+					/>
+				}
 			>
-				<div className="aspect-3/4 w-full overflow-hidden rounded-sm bg-muted">
+				<div
+					className={`overflow-hidden rounded-sm bg-muted ${
+						isList ? "aspect-3/4 h-16 w-12 shrink-0" : "aspect-3/4 w-full"
+					}`}
+				>
 					{game.coverUrl ? (
 						<img
 							alt={game.title}
@@ -74,11 +94,24 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 						</div>
 					)}
 				</div>
-				<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
-				{game.igdbScore !== null && (
-					<div className="mt-1">
-						<StarRating score={game.igdbScore} />
+				{isList ? (
+					<div className="min-w-0 flex-1">
+						<p className="truncate text-sm">{game.title}</p>
+						{game.igdbScore !== null && (
+							<div className="mt-0.5">
+								<StarRating score={game.igdbScore} />
+							</div>
+						)}
 					</div>
+				) : (
+					<>
+						<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
+						{game.igdbScore !== null && (
+							<div className="mt-1">
+								<StarRating score={game.igdbScore} />
+							</div>
+						)}
+					</>
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
