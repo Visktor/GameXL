@@ -66,6 +66,7 @@ export function SearchCommandDialog() {
 
 	return (
 		<CommandDialog
+			className="max-w-lg gap-0 overflow-hidden rounded-2xl border-none p-0 shadow-2xl ring-1 ring-border"
 			onOpenChange={(next) => {
 				if (next) {
 					setOpen(true);
@@ -89,7 +90,7 @@ export function SearchCommandDialog() {
 				placeholder="Search games..."
 				value={query}
 			/>
-			<CommandList>
+			<CommandList className="max-h-96 p-2">
 				{isFetching && games.length === 0 && (
 					<div className="py-6 text-center text-muted-foreground text-xs">
 						Searching...
@@ -99,9 +100,23 @@ export function SearchCommandDialog() {
 					<CommandEmpty>No games found.</CommandEmpty>
 				)}
 				{games.length > 0 && (
-					<CommandGroup>
+					<CommandGroup
+						heading={
+							<div className="flex w-full items-center justify-between">
+								<span>Games</span>
+								<button
+									className="text-primary hover:underline"
+									onClick={() => goToResults(query)}
+									type="button"
+								>
+									See all results
+								</button>
+							</div>
+						}
+					>
 						{games.map((game) => (
 							<CommandItem
+								className="rounded-lg px-2.5 py-2"
 								key={game.igdbId}
 								onSelect={() => goToResults(game.title)}
 								value={game.igdbId}
