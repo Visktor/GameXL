@@ -9,7 +9,13 @@ export const gameDataSchema = z.object({
 	igdbScore: z.number().nullable(),
 });
 
-export const gameStatusSchema = z.enum(["PLAYING", "WANT"]);
+export const gameStatusSchema = z.enum([
+	"PLAYING",
+	"COMPLETED",
+	"DROPPED",
+	"WANT",
+	"ON_HOLD",
+]);
 
 export type GameData = z.infer<typeof gameDataSchema>;
 export type GameStatus = z.infer<typeof gameStatusSchema>;

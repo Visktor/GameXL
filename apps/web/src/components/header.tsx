@@ -6,7 +6,10 @@ import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
 export default function Header() {
-	const links = [{ to: "/", label: "Releases" }] as const;
+	const links = [
+		{ to: "/", label: "Releases" },
+		{ to: "/list", label: "My List" },
+	] as const;
 	const setOpen = useSearchStore((s) => s.setOpen);
 
 	return (

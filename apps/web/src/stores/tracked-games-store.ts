@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import type { GameStatus } from "@/constants/game-status";
 
-type TrackedStatus = string | null;
+type TrackedStatus = GameStatus | null;
 
 interface TrackedGamesStore {
 	setStatus: (igdbId: string, status: TrackedStatus) => void;

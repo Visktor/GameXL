@@ -5,10 +5,12 @@ import {
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
 import { useMutation } from "@tanstack/react-query";
-import { Gamepad2, Heart, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Link } from "react-router";
 
 import { StarRating } from "@/components/star-rating";
+import { StatusSelect } from "@/components/status-select";
+import { GAME_STATUS_META, type GameStatus } from "@/constants/game-status";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
@@ -18,18 +20,29 @@ export interface ReleaseGame {
 	igdbScore: number | null;
 	releaseDate: number | null;
 	title: string;
-	trackedStatus: string | null;
+	trackedStatus: GameStatus | null;
 	trailerVideoId: string | null;
+	/** Epoch ms this game's tracked status was last updated. Only set on list pages. */
+	updatedAt?: number;
 }
 
-export function GameCard({ game }: { game: ReleaseGame }) {
-	const trackedStatus = useTrackedGamesStore(
-		(state) => state.statusByGameId[game.igdbId] ?? game.trackedStatus
+interface GameCardProps {
+	game: ReleaseGame;
+	/** Viewing someone else's list: show status as a badge, no edit controls. */
+	readOnly?: boolean;
+}
+
+export function GameCard({ game, readOnly = false }: GameCardProps) {
+	const storedStatus = useTrackedGamesStore(
+		(state) => state.statusByGameId[game.igdbId]
 	);
+	const trackedStatus = readOnly
+		? game.trackedStatus
+		: (storedStatus ?? game.trackedStatus);
 	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 
 	const addMutation = useMutation({
-		mutationFn: (status: "PLAYING" | "WANT") =>
+		mutationFn: (status: GameStatus) =>
 			trpcClient.userGame.add.mutate({
 				gameData: {
 					igdbId: game.igdbId,
@@ -121,45 +134,43 @@ export function GameCard({ game }: { game: ReleaseGame }) {
 					</div>
 
 					<div className="flex items-center justify-between">
-						<div className="flex gap-1">
-							<Button
-								disabled={addMutation.isPending || trackedStatus === "PLAYING"}
-								onClick={(e) => {
-									e.preventDefault();
-									addMutation.mutate("PLAYING");
-								}}
-								size="sm"
-								variant={trackedStatus === "PLAYING" ? "default" : "outline"}
-							>
-								<Gamepad2 className="h-4 w-4" />
-								Playing
-							</Button>
-							<Button
-								disabled={addMutation.isPending || trackedStatus === "WANT"}
-								onClick={(e) => {
-									e.preventDefault();
-									addMutation.mutate("WANT");
-								}}
-								size="sm"
-								variant={trackedStatus === "WANT" ? "default" : "outline"}
-							>
-								<Heart className="h-4 w-4" />
-								Want
-							</Button>
-						</div>
+						{readOnly ? (
+							trackedStatus && (
+								<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+									{(() => {
+										const { icon: Icon, label } =
+											GAME_STATUS_META[trackedStatus];
+										return (
+											<>
+												<Icon className="h-4 w-4" />
+												{label}
+											</>
+										);
+									})()}
+								</span>
+							)
+						) : (
+							<>
+								<StatusSelect
+									disabled={addMutation.isPending}
+									onChange={(status) => addMutation.mutate(status)}
+									value={trackedStatus}
+								/>
 
-						{trackedStatus && (
-							<Button
-								disabled={removeMutation.isPending}
-								onClick={(e) => {
-									e.preventDefault();
-									removeMutation.mutate();
-								}}
-								size="sm"
-								variant="ghost"
-							>
-								<Trash2 className="h-4 w-4" />
-							</Button>
+								{trackedStatus && (
+									<Button
+										disabled={removeMutation.isPending}
+										onClick={(e) => {
+											e.preventDefault();
+											removeMutation.mutate();
+										}}
+										size="sm"
+										variant="ghost"
+									>
+										<Trash2 className="h-4 w-4" />
+									</Button>
+								)}
+							</>
 						)}
 					</div>
 				</div>

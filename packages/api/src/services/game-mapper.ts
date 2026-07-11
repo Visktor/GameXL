@@ -5,6 +5,7 @@ import {
 	resolveCoverUrl,
 	resolveTrailerVideoId,
 } from "../lib/igdb";
+import type { GameStatus } from "../schemas/user-game.schema";
 
 export interface MappedGame {
 	coverUrl: string | null;
@@ -12,7 +13,7 @@ export interface MappedGame {
 	igdbScore: number | null;
 	releaseDate: number | null;
 	title: string;
-	trackedStatus: string | null;
+	trackedStatus: GameStatus | null;
 	trailerVideoId: string | null;
 }
 
@@ -25,7 +26,7 @@ export async function mapIgdbGamesWithTrackedStatus(
 	}
 
 	const igdbIds = igdbGames.map((g) => String(g.id));
-	const trackedMap = new Map<string, string>();
+	const trackedMap = new Map<string, GameStatus>();
 
 	if (ctx.session || ctx.guestSession) {
 		const trackedGames = await db.userGame.findMany({

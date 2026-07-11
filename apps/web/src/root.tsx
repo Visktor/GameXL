@@ -11,7 +11,9 @@ import { SearchCommandDialog } from "./components/search-command-dialog";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import GameDetails from "./routes/game-details";
+import MyList from "./routes/list";
 import Login from "./routes/login/login";
+import Profile from "./routes/profile";
 import Search from "./routes/search";
 import { useSessionStore } from "./stores/session-store";
 import { queryClient } from "./utils/trpc";
@@ -54,6 +56,8 @@ const router = createBrowserRouter([
 			{ path: "/login", element: <Login /> },
 			{ path: "/search", element: <Search /> },
 			{ path: "/games/:igdbId", element: <GameDetails /> },
+			{ path: "/list", element: <MyList /> },
+			{ path: "/u/:username", element: <Profile /> },
 		],
 	},
 ]);

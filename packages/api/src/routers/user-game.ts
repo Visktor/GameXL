@@ -1,7 +1,12 @@
 import { z } from "zod";
-import { guestProcedure, router } from "../index";
+import { guestProcedure, publicProcedure, router } from "../index";
 import { gameDataSchema, gameStatusSchema } from "../schemas/user-game.schema";
-import { removeGame, trackGame } from "../services/user-game.service";
+import {
+	getMyTrackedGames,
+	getTrackedGamesByUsername,
+	removeGame,
+	trackGame,
+} from "../services/user-game.service";
 
 export const userGameRouter = router({
 	add: guestProcedure
@@ -16,4 +21,10 @@ export const userGameRouter = router({
 	remove: guestProcedure
 		.input(z.object({ igdbId: z.string() }))
 		.mutation(removeGame),
+
+	myList: publicProcedure.query(getMyTrackedGames),
+
+	listByUsername: publicProcedure
+		.input(z.object({ username: z.string() }))
+		.query(getTrackedGamesByUsername),
 });

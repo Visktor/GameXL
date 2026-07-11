@@ -3,6 +3,7 @@ import { env } from "@GameXL/env/server";
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { username } from "better-auth/plugins";
 
 export function createAuth() {
 	const prisma = createPrismaClient();
@@ -36,7 +37,7 @@ export function createAuth() {
 				httpOnly: true,
 			},
 		},
-		plugins: [expo()],
+		plugins: [expo(), username()],
 	});
 }
 

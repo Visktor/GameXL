@@ -1,7 +1,7 @@
 import { Button } from "@GameXL/ui/components/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
-import { Gamepad2, Heart, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 
@@ -9,6 +9,8 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
+import { StatusSelect } from "@/components/status-select";
+import type { GameStatus } from "@/constants/game-status";
 import {
 	IGDB_COVER_HEIGHT,
 	IGDB_COVER_WIDTH,
@@ -41,7 +43,7 @@ export default function GameDetails() {
 	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 
 	const addMutation = useMutation({
-		mutationFn: (trackStatus: "PLAYING" | "WANT") => {
+		mutationFn: (trackStatus: GameStatus) => {
 			if (!data) {
 				throw new Error("Cannot track a game before its details have loaded");
 			}
@@ -193,24 +195,11 @@ export default function GameDetails() {
 						)}
 
 						<div className="mt-auto flex items-center gap-1.5">
-							<Button
-								disabled={addMutation.isPending || trackedStatus === "PLAYING"}
-								onClick={() => addMutation.mutate("PLAYING")}
-								size="sm"
-								variant={trackedStatus === "PLAYING" ? "default" : "outline"}
-							>
-								<Gamepad2 className="h-4 w-4" />
-								Playing
-							</Button>
-							<Button
-								disabled={addMutation.isPending || trackedStatus === "WANT"}
-								onClick={() => addMutation.mutate("WANT")}
-								size="sm"
-								variant={trackedStatus === "WANT" ? "default" : "outline"}
-							>
-								<Heart className="h-4 w-4" />
-								Want
-							</Button>
+							<StatusSelect
+								disabled={addMutation.isPending}
+								onChange={(trackStatus) => addMutation.mutate(trackStatus)}
+								value={trackedStatus ?? null}
+							/>
 							{trackedStatus && (
 								<Button
 									disabled={removeMutation.isPending}

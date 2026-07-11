@@ -1,12 +1,29 @@
 import type { AppRouter } from "@GameXL/api/routers/index";
 import { env } from "@GameXL/env/web";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 import { useSessionStore } from "@/stores/session-store";
 
+const MAX_RETRIES = 3;
+
+function isClientError(error: unknown): boolean {
+	return (
+		error instanceof TRPCClientError &&
+		typeof error.data?.httpStatus === "number" &&
+		error.data.httpStatus >= 400 &&
+		error.data.httpStatus < 500
+	);
+}
+
 export const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			retry: (failureCount, error) =>
+				!isClientError(error) && failureCount < MAX_RETRIES,
+		},
+	},
 	queryCache: new QueryCache({
 		onError: (error, query) => {
 			toast.error(error.message, {
