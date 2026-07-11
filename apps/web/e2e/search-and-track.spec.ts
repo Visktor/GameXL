@@ -39,6 +39,7 @@ test("search for a game and track it as Playing", async ({ page }) => {
 
 	await page.goto("/");
 
+	await page.getByRole("button", { name: "Search games" }).click();
 	await page.getByPlaceholder("Search games...").fill("hollow");
 	await page
 		.getByRole("option", { name: HOLLOW_KNIGHT_NAME })

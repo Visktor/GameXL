@@ -7,6 +7,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 import "./index.css";
 import ErrorPage from "./components/error-page";
 import Header from "./components/header";
+import { SearchCommandDialog } from "./components/search-command-dialog";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import GameDetails from "./routes/game-details";
@@ -34,6 +35,7 @@ function RootLayout() {
 					<Header />
 					<Outlet />
 				</div>
+				<SearchCommandDialog />
 				<Toaster richColors />
 			</ThemeProvider>
 			{import.meta.env.DEV && (

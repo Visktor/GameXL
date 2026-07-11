@@ -1,3 +1,9 @@
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+} from "@GameXL/ui/components/dialog";
 import { cn } from "@GameXL/ui/lib/utils";
 import {
 	CommandEmpty as CommandEmptyPrimitive,
@@ -108,8 +114,39 @@ function CommandItem({
 	);
 }
 
+function CommandDialog({
+	title = "Search games",
+	description = "Search for a game by title",
+	children,
+	className,
+	showCloseButton = true,
+	shouldFilter,
+	...props
+}: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
+	children?: React.ReactNode;
+	className?: string;
+	description?: string;
+	shouldFilter?: boolean;
+	showCloseButton?: boolean;
+	title?: string;
+}) {
+	return (
+		<Dialog {...props}>
+			<DialogContent
+				className={cn("max-w-xl overflow-hidden p-0", className)}
+				showCloseButton={showCloseButton}
+			>
+				<DialogTitle className="sr-only">{title}</DialogTitle>
+				<DialogDescription className="sr-only">{description}</DialogDescription>
+				<Command shouldFilter={shouldFilter}>{children}</Command>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
 export {
 	Command,
+	CommandDialog,
 	CommandEmpty,
 	CommandGroup,
 	CommandInput,
