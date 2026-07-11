@@ -12,6 +12,7 @@ export function StarRating({ score }: { score: number }) {
 			initialValue={(score / 100) * MAX_STARS}
 			readonly
 			SVGstorkeWidth={0}
+			SVGstyle={{ display: "inline-block" }}
 			size={STAR_SIZE}
 		/>
 	);
