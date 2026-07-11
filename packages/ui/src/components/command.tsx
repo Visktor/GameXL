@@ -38,13 +38,13 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandInputPrimitive>) {
 	return (
 		<div
-			className="flex h-8 items-center gap-2 rounded-none border border-input bg-transparent px-2.5 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50"
+			className="flex h-12 items-center gap-3 border-b px-4"
 			data-slot="command-input-wrapper"
 		>
-			<SearchIcon className="size-4 shrink-0 text-muted-foreground" />
+			<SearchIcon className="size-5 shrink-0 text-muted-foreground" />
 			<CommandInputPrimitive
 				className={cn(
-					"flex h-8 w-full rounded-none bg-transparent py-1 text-xs outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+					"flex h-12 w-full rounded-none bg-transparent py-1 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
 					className
 				)}
 				data-slot="command-input"
