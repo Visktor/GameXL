@@ -13,9 +13,7 @@ import {
 	IGDB_COVER_HEIGHT,
 	IGDB_COVER_WIDTH,
 	IGDB_SCREENSHOT_BIG_TEMPLATE,
-	IGDB_SCREENSHOT_HUGE_HEIGHT,
 	IGDB_SCREENSHOT_HUGE_TEMPLATE,
-	IGDB_SCREENSHOT_HUGE_WIDTH,
 } from "@/constants/igdb";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import type { LightboxImage, LightboxTarget } from "@/utils/lightbox";
@@ -98,22 +96,15 @@ export default function GameDetails() {
 		: null;
 
 	const coverImage: LightboxImage | null = data.coverUrl
-		? {
-				alt: data.title,
-				height: IGDB_COVER_HEIGHT,
-				url: data.coverUrl,
-				width: IGDB_COVER_WIDTH,
-			}
+		? { alt: data.title, url: data.coverUrl }
 		: null;
 
 	const screenshotImages: LightboxImage[] = data.screenshots.map((url, i) => ({
 		alt: `${data.title} screenshot ${i + 1}`,
-		height: IGDB_SCREENSHOT_HUGE_HEIGHT,
 		url: url.replace(
 			IGDB_SCREENSHOT_BIG_TEMPLATE,
 			IGDB_SCREENSHOT_HUGE_TEMPLATE
 		),
-		width: IGDB_SCREENSHOT_HUGE_WIDTH,
 	}));
 
 	const selectedImage = LightboxUtils.getImage(
