@@ -9,6 +9,7 @@ import ErrorPage from "./components/error-page";
 import Header from "./components/header";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
+import GameDetails from "./routes/game-details";
 import Login from "./routes/login/login";
 import Search from "./routes/search";
 import { useSessionStore } from "./stores/session-store";
@@ -50,6 +51,7 @@ const router = createBrowserRouter([
 			{ index: true, element: <Home /> },
 			{ path: "/login", element: <Login /> },
 			{ path: "/search", element: <Search /> },
+			{ path: "/games/:igdbId", element: <GameDetails /> },
 		],
 	},
 ]);

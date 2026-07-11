@@ -11,9 +11,14 @@ interface TwitchTokenResponse {
 export interface IGDBGame {
 	cover?: { url: string };
 	first_release_date?: number;
+	genres?: { name: string }[];
 	id: number;
+	involved_companies?: { company: { name: string }; developer: boolean }[];
 	name: string;
+	platforms?: { name: string }[];
 	rating?: number;
+	screenshots?: { url: string }[];
+	summary?: string;
 	videos?: { name?: string; video_id: string }[];
 }
 
@@ -29,6 +34,18 @@ export function resolveTrailerVideoId(game: IGDBGame): string | null {
 	)?.video_id;
 	const firstVideo = game.videos?.[0]?.video_id;
 	return gameplayVideo ?? firstVideo ?? null;
+}
+
+export function resolveScreenshotUrls(game: IGDBGame): string[] {
+	return (game.screenshots ?? []).map(
+		(s) => `https:${s.url.replace("t_thumb", "t_screenshot_big")}`
+	);
+}
+
+export function resolveDeveloper(game: IGDBGame): string | null {
+	return (
+		game.involved_companies?.find((c) => c.developer)?.company.name ?? null
+	);
 }
 
 async function getToken(): Promise<string> {
