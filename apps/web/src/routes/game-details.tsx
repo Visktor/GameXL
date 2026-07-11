@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { Gamepad2, Heart, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Navigate, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
@@ -16,6 +16,7 @@ import {
 	IGDB_SCREENSHOT_HUGE_TEMPLATE,
 } from "@/constants/igdb";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
+import { NotFoundError } from "@/utils/errors";
 import type { LightboxImage, LightboxTarget } from "@/utils/lightbox";
 import { LightboxUtils } from "@/utils/lightbox";
 import { trpcClient } from "@/utils/trpc";
@@ -70,7 +71,7 @@ export default function GameDetails() {
 	});
 
 	if (!igdbId) {
-		return <Navigate replace to="/" />;
+		throw new NotFoundError("Missing igdbId route param");
 	}
 
 	if (status === "pending") {
@@ -78,14 +79,13 @@ export default function GameDetails() {
 	}
 
 	if (status === "error") {
-		const notFound =
-			error instanceof TRPCClientError && error.data?.code === "NOT_FOUND";
+		if (error instanceof TRPCClientError && error.data?.code === "NOT_FOUND") {
+			throw new NotFoundError("Game not found");
+		}
 		return (
 			<div className="flex h-full items-center justify-center">
 				<p className="text-muted-foreground">
-					{notFound
-						? "Game not found."
-						: "Failed to load game. Please try again."}
+					Failed to load game. Please try again.
 				</p>
 			</div>
 		);
