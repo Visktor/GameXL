@@ -10,6 +10,18 @@
         ],
         "matcher": "Write|Edit"
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "[ -d node_modules ] || nvm exec 24 pnpm install",
+            "type": "command",
+            "timeout": 300,
+            "statusMessage": "Installing dependencies (fresh worktree detected)..."
+          }
+        ]
+      }
     ]
   }
 }
