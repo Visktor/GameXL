@@ -9,12 +9,52 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
+import {
+	IGDB_COVER_HEIGHT,
+	IGDB_COVER_WIDTH,
+	IGDB_SCREENSHOT_BIG_TEMPLATE,
+	IGDB_SCREENSHOT_HUGE_HEIGHT,
+	IGDB_SCREENSHOT_HUGE_TEMPLATE,
+	IGDB_SCREENSHOT_HUGE_WIDTH,
+} from "@/constants/igdb";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
+interface LightboxImage {
+	alt: string;
+	height: number;
+	url: string;
+	width: number;
+}
+type LightboxTarget = { index: number; kind: "screenshot" } | { kind: "cover" };
+
+function getNextScreenshotIndex(
+	index: number,
+	direction: -1 | 1,
+	total: number
+) {
+	return (index + direction + total) % total;
+}
+
+function getLightboxImage(
+	target: LightboxTarget | null,
+	cover: LightboxImage | null,
+	screenshots: LightboxImage[]
+): LightboxImage | undefined {
+	if (target?.kind === "cover") {
+		return cover ?? undefined;
+	}
+	if (target?.kind === "screenshot") {
+		return screenshots[target.index];
+	}
+	return undefined;
+}
+
 export default function GameDetails() {
 	const { igdbId } = useParams<{ igdbId: string }>();
-	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	const [lightboxTarget, setLightboxTarget] = useState<LightboxTarget | null>(
+		null
+	);
 
 	const { data, status, error } = useQuery({
 		queryKey: ["game", igdbId],
@@ -76,16 +116,43 @@ export default function GameDetails() {
 		? new Date(data.releaseDate * 1000).getFullYear()
 		: null;
 
-	const images = [
-		...(data.coverUrl ? [{ url: data.coverUrl, alt: data.title }] : []),
-		...data.screenshots.map((url, i) => ({
-			url,
-			alt: `${data.title} screenshot ${i + 1}`,
-		})),
-	];
-	const screenshotOffset = data.coverUrl ? 1 : 0;
-	const selectedImage =
-		lightboxIndex === null ? undefined : images[lightboxIndex];
+	const coverImage: LightboxImage | null = data.coverUrl
+		? {
+				alt: data.title,
+				height: IGDB_COVER_HEIGHT,
+				url: data.coverUrl,
+				width: IGDB_COVER_WIDTH,
+			}
+		: null;
+	const screenshotImages: LightboxImage[] = data.screenshots.map((url, i) => ({
+		alt: `${data.title} screenshot ${i + 1}`,
+		height: IGDB_SCREENSHOT_HUGE_HEIGHT,
+		url: url.replace(
+			IGDB_SCREENSHOT_BIG_TEMPLATE,
+			IGDB_SCREENSHOT_HUGE_TEMPLATE
+		),
+		width: IGDB_SCREENSHOT_HUGE_WIDTH,
+	}));
+	const selectedImage = getLightboxImage(
+		lightboxTarget,
+		coverImage,
+		screenshotImages
+	);
+	const lightboxImageCount =
+		lightboxTarget?.kind === "screenshot" ? screenshotImages.length : 1;
+	const navigateLightbox = (direction: -1 | 1) =>
+		setLightboxTarget((current) =>
+			current?.kind === "screenshot"
+				? {
+						index: getNextScreenshotIndex(
+							current.index,
+							direction,
+							screenshotImages.length
+						),
+						kind: "screenshot",
+					}
+				: current
+		);
 
 	return (
 		<main className="h-full overflow-y-auto p-4">
@@ -96,15 +163,15 @@ export default function GameDetails() {
 							<button
 								aria-label={`Expand cover art for ${data.title}`}
 								className="h-full w-full cursor-pointer transition-opacity hover:opacity-90"
-								onClick={() => setLightboxIndex(0)}
+								onClick={() => setLightboxTarget({ kind: "cover" })}
 								type="button"
 							>
 								<img
 									alt={data.title}
 									className="h-full w-full object-cover"
-									height={374}
+									height={IGDB_COVER_HEIGHT}
 									src={data.coverUrl}
-									width={264}
+									width={IGDB_COVER_WIDTH}
 								/>
 							</button>
 						) : (
@@ -193,8 +260,7 @@ export default function GameDetails() {
 				)}
 
 				<ScreenshotGrid
-					offset={screenshotOffset}
-					onSelect={setLightboxIndex}
+					onSelect={(index) => setLightboxTarget({ index, kind: "screenshot" })}
 					screenshots={data.screenshots}
 					title={data.title}
 				/>
@@ -202,8 +268,10 @@ export default function GameDetails() {
 
 			<ImageLightbox
 				image={selectedImage}
-				onOpenChange={(open) => !open && setLightboxIndex(null)}
-				open={lightboxIndex !== null}
+				imageCount={lightboxImageCount}
+				onNavigate={navigateLightbox}
+				onOpenChange={(open) => !open && setLightboxTarget(null)}
+				open={lightboxTarget !== null}
 			/>
 		</main>
 	);
