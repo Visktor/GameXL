@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { Gamepad2, Heart, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 
 import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
@@ -18,37 +18,9 @@ import {
 	IGDB_SCREENSHOT_HUGE_WIDTH,
 } from "@/constants/igdb";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
+import type { LightboxImage, LightboxTarget } from "@/utils/lightbox";
+import { LightboxUtils } from "@/utils/lightbox";
 import { trpcClient } from "@/utils/trpc";
-
-interface LightboxImage {
-	alt: string;
-	height: number;
-	url: string;
-	width: number;
-}
-type LightboxTarget = { index: number; kind: "screenshot" } | { kind: "cover" };
-
-function getNextScreenshotIndex(
-	index: number,
-	direction: -1 | 1,
-	total: number
-) {
-	return (index + direction + total) % total;
-}
-
-function getLightboxImage(
-	target: LightboxTarget | null,
-	cover: LightboxImage | null,
-	screenshots: LightboxImage[]
-): LightboxImage | undefined {
-	if (target?.kind === "cover") {
-		return cover ?? undefined;
-	}
-	if (target?.kind === "screenshot") {
-		return screenshots[target.index];
-	}
-	return undefined;
-}
 
 export default function GameDetails() {
 	const { igdbId } = useParams<{ igdbId: string }>();
@@ -66,22 +38,27 @@ export default function GameDetails() {
 		(state) =>
 			(igdbId ? state.statusByGameId[igdbId] : undefined) ?? data?.trackedStatus
 	);
+
 	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 
 	const addMutation = useMutation({
-		mutationFn: (status: "PLAYING" | "WANT") =>
-			trpcClient.userGame.add.mutate({
+		mutationFn: (trackStatus: "PLAYING" | "WANT") => {
+			if (!data) {
+				throw new Error("Cannot track a game before its details have loaded");
+			}
+			return trpcClient.userGame.add.mutate({
 				gameData: {
-					igdbId: data?.igdbId ?? "",
-					title: data?.title ?? "",
-					coverUrl: data?.coverUrl ?? null,
-					trailerVideoId: data?.trailerVideoId ?? null,
-					releaseDate: data?.releaseDate ?? null,
-					igdbScore: data?.igdbScore ?? null,
+					igdbId: data.igdbId,
+					title: data.title,
+					coverUrl: data.coverUrl,
+					trailerVideoId: data.trailerVideoId,
+					releaseDate: data.releaseDate,
+					igdbScore: data.igdbScore,
 				},
-				status,
-			}),
-		onMutate: (status) => igdbId && setTrackedStatus(igdbId, status),
+				status: trackStatus,
+			});
+		},
+		onMutate: (trackStatus) => igdbId && setTrackedStatus(igdbId, trackStatus),
 		onError: () =>
 			igdbId && setTrackedStatus(igdbId, data?.trackedStatus ?? null),
 	});
@@ -93,6 +70,10 @@ export default function GameDetails() {
 		onError: () =>
 			igdbId && setTrackedStatus(igdbId, data?.trackedStatus ?? null),
 	});
+
+	if (!igdbId) {
+		return <Navigate replace to="/" />;
+	}
 
 	if (status === "pending") {
 		return <Loader />;
@@ -124,6 +105,7 @@ export default function GameDetails() {
 				width: IGDB_COVER_WIDTH,
 			}
 		: null;
+
 	const screenshotImages: LightboxImage[] = data.screenshots.map((url, i) => ({
 		alt: `${data.title} screenshot ${i + 1}`,
 		height: IGDB_SCREENSHOT_HUGE_HEIGHT,
@@ -133,26 +115,30 @@ export default function GameDetails() {
 		),
 		width: IGDB_SCREENSHOT_HUGE_WIDTH,
 	}));
-	const selectedImage = getLightboxImage(
+
+	const selectedImage = LightboxUtils.getImage(
 		lightboxTarget,
 		coverImage,
 		screenshotImages
 	);
+
 	const lightboxImageCount =
 		lightboxTarget?.kind === "screenshot" ? screenshotImages.length : 1;
-	const navigateLightbox = (direction: -1 | 1) =>
-		setLightboxTarget((current) =>
-			current?.kind === "screenshot"
-				? {
-						index: getNextScreenshotIndex(
-							current.index,
-							direction,
-							screenshotImages.length
-						),
-						kind: "screenshot",
-					}
-				: current
-		);
+
+	const navigateLightbox = (direction: -1 | 1) => {
+		if (lightboxTarget?.kind !== "screenshot") {
+			return;
+		}
+
+		setLightboxTarget({
+			index: LightboxUtils.getNextIndex(
+				lightboxTarget.index,
+				direction,
+				screenshotImages.length
+			),
+			kind: "screenshot",
+		});
+	};
 
 	return (
 		<main className="h-full overflow-y-auto p-4">
