@@ -26,13 +26,73 @@ export interface ReleaseGame {
 	updatedAt?: number;
 }
 
-interface GameCardProps {
+function GameCover({
+	className,
+	game,
+}: {
+	className: string;
 	game: ReleaseGame;
-	/** Viewing someone else's list: show status as a badge, no edit controls. */
-	readOnly?: boolean;
+}) {
+	return (
+		<div className={`overflow-hidden rounded-sm bg-muted ${className}`}>
+			{game.coverUrl ? (
+				<img
+					alt={game.title}
+					className="h-full w-full object-cover transition-transform group-hover:scale-105"
+					height={374}
+					src={game.coverUrl}
+					width={264}
+				/>
+			) : (
+				<div className="flex h-full w-full items-center justify-center p-2 text-center text-muted-foreground text-xs">
+					{game.title}
+				</div>
+			)}
+		</div>
+	);
 }
 
-export function GameCard({ game, readOnly = false }: GameCardProps) {
+function GameCardGridBody({ game }: { game: ReleaseGame }) {
+	return (
+		<>
+			<GameCover className="aspect-3/4 w-full" game={game} />
+			<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
+			{game.igdbScore !== null && (
+				<div className="mt-1">
+					<StarRating score={game.igdbScore} />
+				</div>
+			)}
+		</>
+	);
+}
+
+function GameCardListBody({ game }: { game: ReleaseGame }) {
+	return (
+		<>
+			<GameCover className="aspect-3/4 h-16 w-12 shrink-0" game={game} />
+			<div className="min-w-0 flex-1">
+				<p className="truncate text-sm">{game.title}</p>
+				{game.igdbScore !== null && (
+					<div className="mt-0.5">
+						<StarRating score={game.igdbScore} />
+					</div>
+				)}
+			</div>
+		</>
+	);
+}
+
+export function GameCard({
+	game,
+	layout = "grid",
+	readOnly = false,
+}: {
+	game: ReleaseGame;
+	layout?: "grid" | "list";
+	/** Viewing someone else's list: show status as a badge, no edit controls. */
+	readOnly?: boolean;
+}) {
+	const isList = layout === "list";
 	const storedStatus = useTrackedGamesStore(
 		(state) => state.statusByGameId[game.igdbId]
 	);
@@ -70,28 +130,21 @@ export function GameCard({ game, readOnly = false }: GameCardProps) {
 			<HoverCardTrigger
 				closeDelay={150}
 				delay={300}
-				render={<Link className="group block" to={`/games/${game.igdbId}`} />}
+				render={
+					<Link
+						className={
+							isList
+								? "group flex items-center gap-3 border-b py-2 last:border-b-0"
+								: "group block"
+						}
+						to={`/games/${game.igdbId}`}
+					/>
+				}
 			>
-				<div className="aspect-3/4 w-full overflow-hidden rounded-sm bg-muted">
-					{game.coverUrl ? (
-						<img
-							alt={game.title}
-							className="h-full w-full object-cover transition-transform group-hover:scale-105"
-							height={374}
-							src={game.coverUrl}
-							width={264}
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center p-2 text-center text-muted-foreground text-xs">
-							{game.title}
-						</div>
-					)}
-				</div>
-				<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
-				{game.igdbScore !== null && (
-					<div className="mt-1">
-						<StarRating score={game.igdbScore} />
-					</div>
+				{isList ? (
+					<GameCardListBody game={game} />
+				) : (
+					<GameCardGridBody game={game} />
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
