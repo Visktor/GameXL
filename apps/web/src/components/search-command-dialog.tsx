@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useDebounceCallback } from "usehooks-ts";
+import { useShallow } from "zustand/react/shallow";
 
 import { SearchResultRow } from "@/components/search-result-row";
 import { useSearchStore } from "@/stores/search-store";
@@ -20,13 +21,25 @@ const DEBOUNCE_MS = 300;
 
 export function SearchCommandDialog() {
 	const navigate = useNavigate();
-	const query = useSearchStore((s) => s.query);
-	const debouncedQuery = useSearchStore((s) => s.debouncedQuery);
-	const open = useSearchStore((s) => s.open);
-	const setQuery = useSearchStore((s) => s.setQuery);
-	const setDebouncedQuery = useSearchStore((s) => s.setDebouncedQuery);
-	const setOpen = useSearchStore((s) => s.setOpen);
-	const reset = useSearchStore((s) => s.reset);
+	const {
+		query,
+		debouncedQuery,
+		open,
+		setQuery,
+		setDebouncedQuery,
+		setOpen,
+		reset,
+	} = useSearchStore(
+		useShallow((s) => ({
+			query: s.query,
+			debouncedQuery: s.debouncedQuery,
+			open: s.open,
+			setQuery: s.setQuery,
+			setDebouncedQuery: s.setDebouncedQuery,
+			setOpen: s.setOpen,
+			reset: s.reset,
+		}))
+	);
 	const setDebouncedQueryDelayed = useDebounceCallback(
 		setDebouncedQuery,
 		DEBOUNCE_MS
