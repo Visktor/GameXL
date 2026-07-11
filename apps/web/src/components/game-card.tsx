@@ -22,6 +22,62 @@ export interface ReleaseGame {
 	trailerVideoId: string | null;
 }
 
+function GameCover({
+	className,
+	game,
+}: {
+	className: string;
+	game: ReleaseGame;
+}) {
+	return (
+		<div className={`overflow-hidden rounded-sm bg-muted ${className}`}>
+			{game.coverUrl ? (
+				<img
+					alt={game.title}
+					className="h-full w-full object-cover transition-transform group-hover:scale-105"
+					height={374}
+					src={game.coverUrl}
+					width={264}
+				/>
+			) : (
+				<div className="flex h-full w-full items-center justify-center p-2 text-center text-muted-foreground text-xs">
+					{game.title}
+				</div>
+			)}
+		</div>
+	);
+}
+
+function GameCardGridBody({ game }: { game: ReleaseGame }) {
+	return (
+		<>
+			<GameCover className="aspect-3/4 w-full" game={game} />
+			<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
+			{game.igdbScore !== null && (
+				<div className="mt-1">
+					<StarRating score={game.igdbScore} />
+				</div>
+			)}
+		</>
+	);
+}
+
+function GameCardListBody({ game }: { game: ReleaseGame }) {
+	return (
+		<>
+			<GameCover className="aspect-3/4 h-16 w-12 shrink-0" game={game} />
+			<div className="min-w-0 flex-1">
+				<p className="truncate text-sm">{game.title}</p>
+				{game.igdbScore !== null && (
+					<div className="mt-0.5">
+						<StarRating score={game.igdbScore} />
+					</div>
+				)}
+			</div>
+		</>
+	);
+}
+
 export function GameCard({
 	game,
 	layout = "grid",
@@ -75,43 +131,10 @@ export function GameCard({
 					/>
 				}
 			>
-				<div
-					className={`overflow-hidden rounded-sm bg-muted ${
-						isList ? "aspect-3/4 h-16 w-12 shrink-0" : "aspect-3/4 w-full"
-					}`}
-				>
-					{game.coverUrl ? (
-						<img
-							alt={game.title}
-							className="h-full w-full object-cover transition-transform group-hover:scale-105"
-							height={374}
-							src={game.coverUrl}
-							width={264}
-						/>
-					) : (
-						<div className="flex h-full w-full items-center justify-center p-2 text-center text-muted-foreground text-xs">
-							{game.title}
-						</div>
-					)}
-				</div>
 				{isList ? (
-					<div className="min-w-0 flex-1">
-						<p className="truncate text-sm">{game.title}</p>
-						{game.igdbScore !== null && (
-							<div className="mt-0.5">
-								<StarRating score={game.igdbScore} />
-							</div>
-						)}
-					</div>
+					<GameCardListBody game={game} />
 				) : (
-					<>
-						<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
-						{game.igdbScore !== null && (
-							<div className="mt-1">
-								<StarRating score={game.igdbScore} />
-							</div>
-						)}
-					</>
+					<GameCardGridBody game={game} />
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
