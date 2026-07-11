@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { defineConfig, env } from "prisma/config";
 
 dotenv.config({
-	path: "../../apps/server/.env",
+	path: `../../apps/server/.env.${process.env.NODE_ENV ?? "development"}`,
 });
 
 export default defineConfig({
