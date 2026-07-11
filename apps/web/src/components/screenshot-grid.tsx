@@ -1,12 +1,15 @@
+import {
+	IGDB_SCREENSHOT_THUMBNAIL_HEIGHT,
+	IGDB_SCREENSHOT_THUMBNAIL_WIDTH,
+} from "@/constants/igdb";
+
 interface ScreenshotGridProps {
-	offset: number;
 	onSelect: (index: number) => void;
 	screenshots: string[];
 	title: string;
 }
 
 export function ScreenshotGrid({
-	offset,
 	onSelect,
 	screenshots,
 	title,
@@ -22,15 +25,15 @@ export function ScreenshotGrid({
 					aria-label={`Expand screenshot ${i + 1}`}
 					className="aspect-video cursor-pointer overflow-hidden rounded-sm bg-muted transition-opacity hover:opacity-90"
 					key={url}
-					onClick={() => onSelect(offset + i)}
+					onClick={() => onSelect(i)}
 					type="button"
 				>
 					<img
 						alt={`${title} screenshot ${i + 1}`}
 						className="h-full w-full object-cover"
-						height={360}
+						height={IGDB_SCREENSHOT_THUMBNAIL_HEIGHT}
 						src={url}
-						width={640}
+						width={IGDB_SCREENSHOT_THUMBNAIL_WIDTH}
 					/>
 				</button>
 			))}
