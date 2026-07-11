@@ -2,15 +2,19 @@ import { Button } from "@GameXL/ui/components/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { Gamepad2, Heart, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useParams } from "react-router";
 
+import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
+import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
 export default function GameDetails() {
 	const { igdbId } = useParams<{ igdbId: string }>();
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
 	const { data, status, error } = useQuery({
 		queryKey: ["game", igdbId],
@@ -72,19 +76,37 @@ export default function GameDetails() {
 		? new Date(data.releaseDate * 1000).getFullYear()
 		: null;
 
+	const images = [
+		...(data.coverUrl ? [{ url: data.coverUrl, alt: data.title }] : []),
+		...data.screenshots.map((url, i) => ({
+			url,
+			alt: `${data.title} screenshot ${i + 1}`,
+		})),
+	];
+	const screenshotOffset = data.coverUrl ? 1 : 0;
+	const selectedImage =
+		lightboxIndex === null ? undefined : images[lightboxIndex];
+
 	return (
 		<main className="h-full overflow-y-auto p-4">
 			<div className="mx-auto flex max-w-5xl flex-col gap-6">
 				<div className="flex flex-col gap-6 sm:flex-row">
 					<div className="aspect-3/4 w-full shrink-0 overflow-hidden rounded-sm bg-muted sm:w-56">
 						{data.coverUrl ? (
-							<img
-								alt={data.title}
-								className="h-full w-full object-cover"
-								height={374}
-								src={data.coverUrl}
-								width={264}
-							/>
+							<button
+								aria-label={`Expand cover art for ${data.title}`}
+								className="h-full w-full cursor-pointer transition-opacity hover:opacity-90"
+								onClick={() => setLightboxIndex(0)}
+								type="button"
+							>
+								<img
+									alt={data.title}
+									className="h-full w-full object-cover"
+									height={374}
+									src={data.coverUrl}
+									width={264}
+								/>
+							</button>
 						) : (
 							<div className="flex h-full w-full items-center justify-center p-2 text-center text-muted-foreground text-xs">
 								{data.title}
@@ -170,25 +192,19 @@ export default function GameDetails() {
 					</div>
 				)}
 
-				{data.screenshots.length > 0 && (
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						{data.screenshots.map((url) => (
-							<div
-								className="aspect-video overflow-hidden rounded-sm bg-muted"
-								key={url}
-							>
-								<img
-									alt={`${data.title} screenshot`}
-									className="h-full w-full object-cover"
-									height={360}
-									src={url}
-									width={640}
-								/>
-							</div>
-						))}
-					</div>
-				)}
+				<ScreenshotGrid
+					offset={screenshotOffset}
+					onSelect={setLightboxIndex}
+					screenshots={data.screenshots}
+					title={data.title}
+				/>
 			</div>
+
+			<ImageLightbox
+				image={selectedImage}
+				onOpenChange={(open) => !open && setLightboxIndex(null)}
+				open={lightboxIndex !== null}
+			/>
 		</main>
 	);
 }
