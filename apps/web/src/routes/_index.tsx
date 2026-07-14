@@ -20,10 +20,10 @@ import { useViewPreferenceStore } from "@/stores/view-preference-store";
 import { trpcClient } from "@/utils/trpc";
 
 const SPANS = [
-	{ key: "today", label: "Today", icon: Clock },
-	{ key: "week", label: "This Week", icon: Calendar },
-	{ key: "month", label: "30 Days", icon: CalendarDays },
 	{ key: "year", label: "This Year", icon: CalendarRange },
+	{ key: "month", label: "30 Days", icon: CalendarDays },
+	{ key: "week", label: "This Week", icon: Calendar },
+	{ key: "today", label: "Today", icon: Clock },
 ] as const;
 
 const SORTS = [
