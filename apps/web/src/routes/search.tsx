@@ -1,5 +1,6 @@
 import { Skeleton } from "@GameXL/ui/components/skeleton";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { SearchIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 
@@ -55,27 +56,42 @@ export default function SearchPage() {
 		<main className="h-full overflow-y-auto p-4">
 			<div className="mb-4 flex items-center justify-between">
 				<h1 className="text-lg">
-					Search results for <span className="font-medium">"{q}"</span>
+					{q.length > 0 ? (
+						<>
+							Search results for <span className="font-medium">"{q}"</span>
+						</>
+					) : (
+						"Search"
+					)}
 				</h1>
-				<div className="flex overflow-hidden rounded-none border">
-					{SEARCH_MODES.map(({ key, label }) => (
-						<button
-							className={`px-2.5 py-1 text-xs transition-colors ${
-								mode === key
-									? "bg-accent font-medium"
-									: "text-muted-foreground hover:bg-accent/50"
-							}`}
-							key={key}
-							onClick={() => setSearchParams({ q, mode: key })}
-							type="button"
-						>
-							{label}
-						</button>
-					))}
-				</div>
+				{q.length > 0 && (
+					<div className="flex overflow-hidden rounded-none border">
+						{SEARCH_MODES.map(({ key, label }) => (
+							<button
+								className={`px-2.5 py-1 text-xs transition-colors ${
+									mode === key
+										? "bg-accent font-medium"
+										: "text-muted-foreground hover:bg-accent/50"
+								}`}
+								key={key}
+								onClick={() => setSearchParams({ q, mode: key })}
+								type="button"
+							>
+								{label}
+							</button>
+						))}
+					</div>
+				)}
 			</div>
 
-			{status === "pending" && (
+			{q.length === 0 && (
+				<div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
+					<SearchIcon className="size-6" />
+					<p>Type a game title to search.</p>
+				</div>
+			)}
+
+			{q.length > 0 && status === "pending" && (
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
 					{Array.from({ length: 20 }).map((_, i) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
