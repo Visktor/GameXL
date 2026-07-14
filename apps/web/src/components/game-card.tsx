@@ -4,8 +4,9 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
-import { useMutation } from "@tanstack/react-query";
-import { Heart, Trash2 } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Gamepad2, Heart, Trash2, Video, VideoOff } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
 
 import { StarRating } from "@/components/star-rating";
@@ -39,8 +40,13 @@ function GameCover({
 	className: string;
 	game: ReleaseGame;
 }) {
+	const hasTrailer = Boolean(game.trailerVideoId);
+	const TrailerIcon = hasTrailer ? Video : VideoOff;
+
 	return (
-		<div className={`overflow-hidden rounded-sm bg-muted ${className}`}>
+		<div
+			className={`relative overflow-hidden rounded-sm bg-muted ${className}`}
+		>
 			{game.coverUrl ? (
 				<img
 					alt={game.title}
@@ -54,6 +60,13 @@ function GameCover({
 					{game.title}
 				</div>
 			)}
+			<span
+				aria-label={hasTrailer ? "Trailer available" : "No trailer available"}
+				className="absolute right-1 bottom-1 rounded-full bg-background/70 p-1 text-foreground"
+				role="img"
+			>
+				<TrailerIcon className="h-3 w-3" />
+			</span>
 		</div>
 	);
 }
@@ -88,6 +101,48 @@ function GameCardListBody({ game }: { game: ReleaseGame }) {
 	);
 }
 
+function HoverPreviewMedia({
+	game,
+	isOpen,
+}: {
+	game: ReleaseGame;
+	isOpen: boolean;
+}) {
+	const screenshotsQuery = useQuery({
+		queryKey: ["game-screenshots", game.igdbId],
+		queryFn: () =>
+			trpcClient.game.getScreenshots.query({ igdbId: game.igdbId }),
+		enabled: isOpen && !game.trailerVideoId,
+	});
+
+	return (
+		<div className="aspect-video w-full overflow-hidden rounded-t-sm bg-muted">
+			{game.trailerVideoId ? (
+				<iframe
+					allow="autoplay; encrypted-media"
+					className="h-full w-full"
+					src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=3`}
+					title={game.title}
+				/>
+			) : (
+				screenshotsQuery.data &&
+				(screenshotsQuery.data.screenshots[0] ? (
+					// biome-ignore lint/correctness/useImageSize: dimensions vary per screenshot and aren't known before load; rendered inside a fixed aspect-video box, so no layout shift occurs
+					<img
+						alt={game.title}
+						className="h-full w-full object-cover"
+						src={screenshotsQuery.data.screenshots[0]}
+					/>
+				) : (
+					<div className="flex h-full w-full items-center justify-center">
+						<Gamepad2 className="h-8 w-8 text-muted-foreground" />
+					</div>
+				))
+			)}
+		</div>
+	);
+}
+
 export function GameCard({
 	game,
 	layout = "grid",
@@ -99,6 +154,8 @@ export function GameCard({
 	readOnly?: boolean;
 }) {
 	const isList = layout === "list";
+	const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
+
 	const storedStatus = useTrackedGamesStore(
 		(state) => state.statusByGameId[game.igdbId]
 	);
@@ -132,7 +189,7 @@ export function GameCard({
 	});
 
 	return (
-		<HoverCard>
+		<HoverCard onOpenChange={setIsHoverCardOpen}>
 			<HoverCardTrigger
 				closeDelay={150}
 				delay={300}
@@ -154,26 +211,7 @@ export function GameCard({
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
-				{/* Video or cover art */}
-				<div className="aspect-video w-full overflow-hidden rounded-t-sm bg-muted">
-					{game.trailerVideoId ? (
-						<iframe
-							allow="autoplay; encrypted-media"
-							className="h-full w-full"
-							src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=3`}
-							title={game.title}
-						/>
-					) : null}
-					{!game.trailerVideoId && game.coverUrl ? (
-						<img
-							alt={game.title}
-							className="h-full w-full object-cover"
-							height={374}
-							src={game.coverUrl}
-							width={264}
-						/>
-					) : null}
-				</div>
+				<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
 
 				{/* Scores + actions */}
 				<div className="p-3">

@@ -63,3 +63,41 @@ export async function getGameById({
 		screenshots: resolveScreenshotUrls(igdbGame),
 	};
 }
+
+interface GetGameScreenshotsInput {
+	igdbId: string;
+}
+
+export async function getGameScreenshots({
+	input,
+	ctx,
+}: {
+	input: GetGameScreenshotsInput;
+	ctx: Pick<Context, "logger">;
+}) {
+	let igdbGames: IGDBGame[];
+
+	try {
+		igdbGames = await queryIGDB<IGDBGame[]>(
+			"games",
+			`fields screenshots.url; where id = ${Number(input.igdbId)};`
+		);
+	} catch (err) {
+		ctx.logger.error(
+			{ err, igdbId: input.igdbId },
+			"Failed to fetch game screenshots from IGDB"
+		);
+		throw new TRPCError({
+			code: "INTERNAL_SERVER_ERROR",
+			message: "Failed to fetch game screenshots from IGDB",
+		});
+	}
+
+	const igdbGame = igdbGames[0];
+
+	if (!igdbGame) {
+		throw new TRPCError({ code: "NOT_FOUND", message: "Game not found" });
+	}
+
+	return { screenshots: resolveScreenshotUrls(igdbGame) };
+}
