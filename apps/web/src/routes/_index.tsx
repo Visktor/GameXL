@@ -12,8 +12,8 @@ import {
 	TrendingUp,
 	Trophy,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
+import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 
 import { GameCard } from "@/components/game-card";
 import { useViewPreferenceStore } from "@/stores/view-preference-store";
@@ -41,11 +41,39 @@ const LAYOUTS = [
 type Span = (typeof SPANS)[number]["key"];
 type SortBy = (typeof SORTS)[number]["key"];
 
+// Renders items well outside the viewport so they stay mounted across scroll,
+// preventing covers from unmounting/remounting (and visibly flickering) as
+// virtuoso recycles offscreen rows.
+const SCROLL_OVERSCAN_PX = 800;
+
+interface LoadMoreContext {
+	hasGames: boolean;
+	hasNextPage: boolean;
+	isFetchingNextPage: boolean;
+}
+
+function LoadMoreFooter({ context }: { context: LoadMoreContext }) {
+	const { hasGames, hasNextPage, isFetchingNextPage } = context;
+	return (
+		<div className="py-4">
+			{isFetchingNextPage && (
+				<div className="flex justify-center">
+					<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+				</div>
+			)}
+			{!hasNextPage && hasGames && (
+				<p className="text-center text-muted-foreground text-xs">
+					You've seen all releases for this period.
+				</p>
+			)}
+		</div>
+	);
+}
+
 export default function ReleasesPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const span: Span = (searchParams.get("span") ?? "today") as Span;
 	const sortBy: SortBy = (searchParams.get("sortBy") ?? "popularity") as SortBy;
-	const bottomRef = useRef<HTMLDivElement>(null);
 	const layout = useViewPreferenceStore((s) => s.layout);
 	const setLayout = useViewPreferenceStore((s) => s.setLayout);
 
@@ -58,26 +86,19 @@ export default function ReleasesPage() {
 			getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
 		});
 
-	useEffect(() => {
-		const el = bottomRef.current;
-		if (!el) {
-			return;
-		}
-
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-					fetchNextPage();
-				}
-			},
-			{ threshold: 0.1 }
-		);
-
-		observer.observe(el);
-		return () => observer.disconnect();
-	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
 	const games = data?.pages.flatMap((p) => p.games) ?? [];
+
+	const handleEndReached = () => {
+		if (hasNextPage && !isFetchingNextPage) {
+			fetchNextPage();
+		}
+	};
+
+	const loadMoreContext: LoadMoreContext = {
+		hasGames: games.length > 0,
+		hasNextPage: Boolean(hasNextPage),
+		isFetchingNextPage,
+	};
 
 	return (
 		<div className="flex h-full overflow-hidden">
@@ -129,28 +150,32 @@ export default function ReleasesPage() {
 			</aside>
 
 			{/* Main content */}
-			<main className="flex-1 overflow-y-auto p-4">
+			<main className="flex-1 overflow-hidden p-4">
 				{status === "pending" && layout === "grid" && (
-					<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-						{Array.from({ length: 20 }).map((_, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
-							<div key={i}>
-								<Skeleton className="aspect-[3/4] w-full rounded-sm" />
-								<Skeleton className="mt-1 h-4 w-3/4" />
-							</div>
-						))}
+					<div className="h-full overflow-y-auto">
+						<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+							{Array.from({ length: 20 }).map((_, i) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
+								<div key={i}>
+									<Skeleton className="aspect-[3/4] w-full rounded-sm" />
+									<Skeleton className="mt-1 h-4 w-3/4" />
+								</div>
+							))}
+						</div>
 					</div>
 				)}
 
 				{status === "pending" && layout === "list" && (
-					<div className="flex flex-col">
-						{Array.from({ length: 12 }).map((_, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
-							<div className="flex items-center gap-3 border-b py-2" key={i}>
-								<Skeleton className="aspect-3/4 h-16 w-12 shrink-0 rounded-sm" />
-								<Skeleton className="h-4 w-1/3" />
-							</div>
-						))}
+					<div className="h-full overflow-y-auto">
+						<div className="flex flex-col">
+							{Array.from({ length: 12 }).map((_, i) => (
+								// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
+								<div className="flex items-center gap-3 border-b py-2" key={i}>
+									<Skeleton className="aspect-3/4 h-16 w-12 shrink-0 rounded-sm" />
+									<Skeleton className="h-4 w-1/3" />
+								</div>
+							))}
+						</div>
 					</div>
 				)}
 
@@ -170,33 +195,37 @@ export default function ReleasesPage() {
 					</div>
 				)}
 
-				{status === "success" && games.length > 0 && (
-					<div
-						className={
-							layout === "grid"
-								? "grid grid-cols-2 gap-4 sm:grid-cols-5"
-								: "flex flex-col"
-						}
-					>
-						{games.map((game) => (
-							<GameCard game={game} key={game.igdbId} layout={layout} />
-						))}
-					</div>
+				{status === "success" && games.length > 0 && layout === "grid" && (
+					<VirtuosoGrid
+						components={{ Footer: LoadMoreFooter }}
+						context={loadMoreContext}
+						endReached={handleEndReached}
+						itemContent={(index) => (
+							<GameCard game={games[index]} layout="grid" />
+						)}
+						listClassName="grid grid-cols-2 gap-4 sm:grid-cols-5"
+						overscan={SCROLL_OVERSCAN_PX}
+						style={{ height: "100%", scrollbarGutter: "stable" }}
+						totalCount={games.length}
+					/>
 				)}
 
-				{/* Infinite scroll sentinel */}
-				<div className="py-4" ref={bottomRef}>
-					{isFetchingNextPage && (
-						<div className="flex justify-center">
-							<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-foreground" />
-						</div>
-					)}
-					{status === "success" && !hasNextPage && games.length > 0 && (
-						<p className="text-center text-muted-foreground text-xs">
-							You've seen all releases for this period.
-						</p>
-					)}
-				</div>
+				{status === "success" && games.length > 0 && layout === "list" && (
+					<Virtuoso
+						components={{ Footer: LoadMoreFooter }}
+						context={loadMoreContext}
+						endReached={handleEndReached}
+						increaseViewportBy={{
+							bottom: SCROLL_OVERSCAN_PX,
+							top: SCROLL_OVERSCAN_PX,
+						}}
+						itemContent={(index) => (
+							<GameCard game={games[index]} layout="list" />
+						)}
+						style={{ height: "100%" }}
+						totalCount={games.length}
+					/>
+				)}
 			</main>
 		</div>
 	);
