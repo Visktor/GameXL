@@ -27,7 +27,9 @@ export default function UserMenu() {
 	if (!session) {
 		return (
 			<Link to="/login">
-				<Button variant="outline">Sign In</Button>
+				<Button className="rounded-full" variant="ghost">
+					Sign In
+				</Button>
 			</Link>
 		);
 	}
@@ -37,27 +39,44 @@ export default function UserMenu() {
 	return (
 		<>
 			<DropdownMenu>
-				<DropdownMenuTrigger render={<Button variant="outline" />}>
+				<DropdownMenuTrigger
+					render={<Button className="rounded-full" variant="ghost" />}
+				>
 					{session.user.name}
 				</DropdownMenuTrigger>
-				<DropdownMenuContent className="bg-card">
+				<DropdownMenuContent
+					align="end"
+					className="min-w-48 rounded-2xl bg-card p-1 shadow-lg"
+				>
 					<DropdownMenuGroup>
 						<DropdownMenuLabel>My Account</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem>{session.user.email}</DropdownMenuItem>
-						<DropdownMenuItem render={<Link to="/list" />}>
+						<DropdownMenuItem className="rounded-lg">
+							{session.user.email}
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							className="rounded-lg"
+							render={<Link to="/list" />}
+						>
 							My List
 						</DropdownMenuItem>
 						{username && (
-							<DropdownMenuItem render={<Link to={`/u/${username}`} />}>
+							<DropdownMenuItem
+								className="rounded-lg"
+								render={<Link to={`/u/${username}`} />}
+							>
 								My Profile
 							</DropdownMenuItem>
 						)}
-						<DropdownMenuItem onClick={() => setUsernameDialogOpen(true)}>
+						<DropdownMenuItem
+							className="rounded-lg"
+							onClick={() => setUsernameDialogOpen(true)}
+						>
 							{username ? "Change Username" : "Set Username"}
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
+							className="rounded-lg"
 							onClick={() => {
 								authClient.signOut({
 									fetchOptions: {

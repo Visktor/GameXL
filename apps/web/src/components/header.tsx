@@ -1,53 +1,60 @@
-import { SearchIcon } from "lucide-react";
+import { cn } from "@GameXL/ui/lib/utils";
+import { BookmarkIcon, HomeIcon, SearchIcon } from "lucide-react";
 import { NavLink } from "react-router";
 
-import { useSearchStore } from "@/stores/search-store";
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
-export default function Header() {
-	const links = [
-		{ to: "/", label: "Releases" },
-		{ to: "/list", label: "My List" },
-	] as const;
-	const setOpen = useSearchStore((s) => s.setOpen);
+const NAV_ITEMS = [
+	{ to: "/", label: "Releases", icon: HomeIcon },
+	{ to: "/list", label: "My List", icon: BookmarkIcon },
+	{ to: "/search", label: "Search", icon: SearchIcon },
+] as const;
 
+function NavPillItem({
+	to,
+	label,
+	icon: Icon,
+}: {
+	to: string;
+	label: string;
+	icon: typeof HomeIcon;
+}) {
 	return (
-		<div className="border-border border-b">
-			<div className="flex h-14 flex-row items-center gap-4 px-4">
-				<nav className="flex shrink-0 items-center gap-4 font-bold text-lg">
-					{links.map(({ to, label }) => (
-						<NavLink
-							className={({ isActive }) =>
-								isActive ? "" : "text-muted-foreground"
-							}
-							end
-							key={to}
-							to={to}
-						>
-							{label}
-						</NavLink>
-					))}
-				</nav>
-				<div className="flex flex-1 justify-center">
-					<button
-						aria-label="Search games"
-						className="flex h-9 w-full max-w-md items-center gap-2 rounded-full border border-input bg-muted/40 px-4 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
-						onClick={() => setOpen(true)}
-						type="button"
-					>
-						<SearchIcon className="size-4 shrink-0" />
-						<span className="flex-1 text-left">Search games...</span>
-						<kbd className="pointer-events-none inline-flex h-5 select-none items-center rounded-full border bg-background px-2 font-mono text-[10px]">
-							⌘K
-						</kbd>
-					</button>
-				</div>
-				<div className="flex shrink-0 items-center gap-2">
-					<ModeToggle />
-					<UserMenu />
-				</div>
+		<NavLink
+			className={({ isActive }) =>
+				cn(
+					"flex h-9 shrink-0 items-center gap-2 rounded-full px-3 text-sm transition-colors",
+					isActive
+						? "bg-foreground font-medium text-background"
+						: "w-9 justify-center px-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+				)
+			}
+			end
+			to={to}
+		>
+			{({ isActive }) => (
+				<>
+					<Icon className="size-4 shrink-0" />
+					{isActive && <span>{label}</span>}
+				</>
+			)}
+		</NavLink>
+	);
+}
+
+export default function Header() {
+	return (
+		<header className="flex items-center justify-between gap-3 px-4 py-3">
+			<nav className="flex items-center gap-1 rounded-full border border-border bg-popover p-1.5 shadow-lg">
+				{NAV_ITEMS.map((item) => (
+					<NavPillItem key={item.to} {...item} />
+				))}
+			</nav>
+			<div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-popover p-1.5 shadow-lg">
+				<ModeToggle />
+				<UserMenu />
 			</div>
-		</div>
+		</header>
 	);
 }
