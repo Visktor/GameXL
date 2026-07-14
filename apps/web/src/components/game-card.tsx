@@ -5,14 +5,20 @@ import {
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
 import { useMutation } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
 import { Link } from "react-router";
 
 import { StarRating } from "@/components/star-rating";
-import { StatusSelect } from "@/components/status-select";
-import { GAME_STATUS_META, type GameStatus } from "@/constants/game-status";
+import { StatusButtonGroup } from "@/components/status-select";
+import {
+	GAME_STATUS_META,
+	GAME_STATUSES,
+	type GameStatus,
+} from "@/constants/game-status";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
+
+const TRACK_STATUSES = GAME_STATUSES.filter((status) => status !== "WANT");
 
 export interface ReleaseGame {
 	coverUrl: string | null;
@@ -171,7 +177,46 @@ export function GameCard({
 
 				{/* Scores + actions */}
 				<div className="p-3">
-					<div className="mb-3 flex items-center justify-between text-sm">
+					<div className="mb-3 flex items-center gap-2 text-sm">
+						{readOnly ? (
+							<Heart
+								className={
+									trackedStatus === "WANT"
+										? "h-4 w-4 fill-rose-500 text-rose-500"
+										: "h-4 w-4 text-muted-foreground"
+								}
+							/>
+						) : (
+							<Button
+								aria-label={
+									trackedStatus === "WANT"
+										? "Remove from want to play"
+										: "Want to play"
+								}
+								aria-pressed={trackedStatus === "WANT"}
+								disabled={addMutation.isPending || removeMutation.isPending}
+								onClick={(e) => {
+									e.preventDefault();
+									if (trackedStatus === "WANT") {
+										removeMutation.mutate();
+									} else {
+										addMutation.mutate("WANT");
+									}
+								}}
+								size="icon-xs"
+								type="button"
+								variant="ghost"
+							>
+								<Heart
+									className={
+										trackedStatus === "WANT"
+											? "h-4 w-4 fill-rose-500 text-rose-500"
+											: "h-4 w-4"
+									}
+								/>
+							</Button>
+						)}
+
 						{game.igdbScore === null ? (
 							<span className="text-muted-foreground text-xs">
 								No IGDB score
@@ -186,9 +231,10 @@ export function GameCard({
 						)}
 					</div>
 
-					<div className="flex items-center justify-between">
+					<div className="flex flex-wrap items-center gap-1.5">
 						{readOnly ? (
-							trackedStatus && (
+							trackedStatus &&
+							trackedStatus !== "WANT" && (
 								<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
 									{(() => {
 										const { icon: Icon, label } =
@@ -204,9 +250,10 @@ export function GameCard({
 							)
 						) : (
 							<>
-								<StatusSelect
+								<StatusButtonGroup
 									disabled={addMutation.isPending}
 									onChange={(status) => addMutation.mutate(status)}
+									statuses={TRACK_STATUSES}
 									value={trackedStatus}
 								/>
 
