@@ -10,6 +10,7 @@ import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
 import { StatusSelect } from "@/components/status-select";
+import { YouTubeTrailer } from "@/components/youtube-trailer";
 import type { GameStatus } from "@/constants/game-status";
 import {
 	IGDB_COVER_HEIGHT,
@@ -34,6 +35,8 @@ export default function GameDetails() {
 		queryFn: () => trpcClient.game.getById.query({ igdbId: igdbId ?? "" }),
 		enabled: Boolean(igdbId),
 	});
+
+	const [trailerFailed, setTrailerFailed] = useState(false);
 
 	const trackedStatus = useTrackedGamesStore(
 		(state) =>
@@ -214,13 +217,12 @@ export default function GameDetails() {
 					</div>
 				</div>
 
-				{data.trailerVideoId && (
+				{data.trailerVideoId && !trailerFailed && (
 					<div className="aspect-video w-full overflow-hidden rounded-sm bg-muted">
-						<iframe
-							allow="autoplay; encrypted-media"
-							className="h-full w-full"
-							src={`https://www.youtube.com/embed/${data.trailerVideoId}?controls=1`}
+						<YouTubeTrailer
+							onEmbedFailure={() => setTrailerFailed(true)}
 							title={data.title}
+							videoId={data.trailerVideoId}
 						/>
 					</div>
 				)}

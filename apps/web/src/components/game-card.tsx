@@ -11,6 +11,7 @@ import { Link } from "react-router";
 
 import { StarRating } from "@/components/star-rating";
 import { StatusButtonGroup } from "@/components/status-select";
+import { YouTubeTrailer } from "@/components/youtube-trailer";
 import {
 	GAME_STATUS_META,
 	GAME_STATUSES,
@@ -108,23 +109,28 @@ function HoverPreviewMedia({
 	game: ReleaseGame;
 	isOpen: boolean;
 }) {
+	const hasTrailer = Boolean(game.trailerVideoId);
+	const [trailerFailed, setTrailerFailed] = useState(false);
+	const needsScreenshot = !hasTrailer || trailerFailed;
+
 	const screenshotsQuery = useQuery({
 		queryKey: ["game-screenshots", game.igdbId],
 		queryFn: () =>
 			trpcClient.game.getScreenshots.query({ igdbId: game.igdbId }),
-		enabled: isOpen && !game.trailerVideoId,
+		enabled: isOpen && needsScreenshot,
 	});
 
 	return (
 		<div className="aspect-video w-full overflow-hidden rounded-t-sm bg-muted">
-			{game.trailerVideoId ? (
-				<iframe
-					allow="autoplay; encrypted-media"
-					className="h-full w-full"
-					src={`https://www.youtube.com/embed/${game.trailerVideoId}?autoplay=1&mute=1&controls=3`}
+			{hasTrailer && !trailerFailed ? (
+				<YouTubeTrailer
+					autoplay
+					onEmbedFailure={() => setTrailerFailed(true)}
 					title={game.title}
+					videoId={game.trailerVideoId as string}
 				/>
 			) : (
+				needsScreenshot &&
 				screenshotsQuery.data &&
 				(screenshotsQuery.data.screenshots[0] ? (
 					// biome-ignore lint/correctness/useImageSize: dimensions vary per screenshot and aren't known before load; rendered inside a fixed aspect-video box, so no layout shift occurs
