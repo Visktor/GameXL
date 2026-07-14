@@ -77,6 +77,11 @@ export function SearchCommandDialog() {
 		navigate(`/search?q=${encodeURIComponent(q.trim())}`);
 	}
 
+	function goToGame(igdbId: string) {
+		reset();
+		navigate(`/games/${igdbId}`);
+	}
+
 	return (
 		<CommandDialog
 			className="max-w-lg gap-0 overflow-hidden rounded-2xl border-none p-0 shadow-2xl ring-1 ring-border"
@@ -131,7 +136,7 @@ export function SearchCommandDialog() {
 							<CommandItem
 								className="rounded-lg px-2.5 py-2"
 								key={game.igdbId}
-								onSelect={() => goToResults(game.title)}
+								onSelect={() => goToGame(game.igdbId)}
 								value={game.igdbId}
 							>
 								<SearchResultRow game={game} />
