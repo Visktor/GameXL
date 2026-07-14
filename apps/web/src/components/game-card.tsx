@@ -76,11 +76,11 @@ function GameCardGridBody({ game }: { game: ReleaseGame }) {
 		<>
 			<GameCover className="aspect-3/4 w-full" game={game} />
 			<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
-			{game.igdbScore !== null && (
-				<div className="mt-1">
-					<StarRating score={game.igdbScore} />
-				</div>
-			)}
+			{/* Always mounted (just hidden) so every grid card measures the same
+			height — VirtuosoGrid assumes uniform item size and jitters otherwise. */}
+			<div className={`mt-1 ${game.igdbScore === null ? "invisible" : ""}`}>
+				<StarRating score={game.igdbScore ?? 0} />
+			</div>
 		</>
 	);
 }
