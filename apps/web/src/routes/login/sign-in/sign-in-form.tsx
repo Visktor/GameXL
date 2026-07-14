@@ -10,6 +10,7 @@ import { authClient } from "@/lib/auth-client";
 import { trpcClient } from "@/utils/trpc";
 
 import Loader from "../../../components/loader";
+import GoogleSignInButton from "../google-sign-in-button";
 
 export default function SignInForm({
 	onSwitchToSignUp,
@@ -129,6 +130,14 @@ export default function SignInForm({
 					)}
 				</form.Subscribe>
 			</form>
+
+			<div className="my-4 flex items-center gap-3">
+				<div className="h-px flex-1 bg-border" />
+				<span className="text-muted-foreground text-xs">OR</span>
+				<div className="h-px flex-1 bg-border" />
+			</div>
+
+			<GoogleSignInButton />
 
 			<div className="mt-4 text-center">
 				<Button
