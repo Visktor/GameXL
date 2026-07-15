@@ -3,6 +3,7 @@ import type { Context } from "../context";
 import {
 	type IGDBGame,
 	resolveCoverUrl,
+	resolveScreenshotUrls,
 	resolveTrailerVideoId,
 } from "../lib/igdb";
 import type { GameStatus } from "../schemas/user-game.schema";
@@ -52,7 +53,9 @@ export async function mapIgdbGamesWithTrackedStatus(
 		return {
 			igdbId,
 			title: g.name,
-			coverUrl: resolveCoverUrl(g),
+			// Falls back to a screenshot (cropped to the cover's aspect
+			// ratio client-side) when IGDB has no dedicated cover art.
+			coverUrl: resolveCoverUrl(g) ?? resolveScreenshotUrls(g)[0] ?? null,
 			trailerVideoId: resolveTrailerVideoId(g),
 			releaseDate: g.first_release_date ?? null,
 			igdbScore: g.rating ?? null,
