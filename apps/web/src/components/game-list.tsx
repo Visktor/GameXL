@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from "@GameXL/ui/components/tabs";
 import { useMemo, useState } from "react";
 
 import { GameCard, type ReleaseGame } from "@/components/game-card";
+import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
 import { GAME_STATUS_META, GAME_STATUSES } from "@/constants/game-status";
 
 const TABS = ["ALL", ...GAME_STATUSES] as const;
@@ -118,7 +119,7 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 					Nothing here yet.
 				</p>
 			) : (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+				<div className={GAME_GRID_CLASSNAME}>
 					{visibleGames.map((game) => (
 						<GameCard game={game} key={game.igdbId} readOnly={readOnly} />
 					))}

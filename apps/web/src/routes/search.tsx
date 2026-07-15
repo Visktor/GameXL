@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router";
 
 import { GameCard } from "@/components/game-card";
+import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
 import { trpcClient } from "@/utils/trpc";
 
 const SEARCH_MODES = [
@@ -92,7 +93,7 @@ export default function SearchPage() {
 			)}
 
 			{q.length > 0 && status === "pending" && (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+				<div className={GAME_GRID_CLASSNAME}>
 					{Array.from({ length: 20 }).map((_, i) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
 						<div key={i}>
@@ -118,7 +119,7 @@ export default function SearchPage() {
 			)}
 
 			{status === "success" && games.length > 0 && (
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+				<div className={GAME_GRID_CLASSNAME}>
 					{games.map((game) => (
 						<GameCard game={game} key={game.igdbId} />
 					))}
