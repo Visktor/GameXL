@@ -76,7 +76,10 @@ function GameCardGridBody({ game }: { game: ReleaseGame }) {
 	return (
 		<>
 			<GameCover className="aspect-3/4 w-full" game={game} />
-			<p className="mt-1 line-clamp-2 text-sm">{game.title}</p>
+			{/* Truncated to 1 line (not 2) so every grid card measures the same
+			height regardless of title length — VirtuosoGrid assumes uniform
+			item size and jitters otherwise. */}
+			<p className="mt-1 truncate text-sm">{game.title}</p>
 			{/* Always mounted (just hidden) so every grid card measures the same
 			height — VirtuosoGrid assumes uniform item size and jitters otherwise. */}
 			<div className={`mt-1 ${game.igdbScore === null ? "invisible" : ""}`}>

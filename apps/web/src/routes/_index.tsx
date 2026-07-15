@@ -72,7 +72,7 @@ function LoadMoreFooter({ context }: { context: LoadMoreContext }) {
 
 export default function ReleasesPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
-	const span: Span = (searchParams.get("span") ?? "today") as Span;
+	const span: Span = (searchParams.get("span") ?? "year") as Span;
 	const sortBy: SortBy = (searchParams.get("sortBy") ?? "popularity") as SortBy;
 	const layout = useViewPreferenceStore((s) => s.layout);
 	const setLayout = useViewPreferenceStore((s) => s.setLayout);
@@ -198,6 +198,7 @@ export default function ReleasesPage() {
 				{status === "success" && games.length > 0 && layout === "grid" && (
 					<VirtuosoGrid
 						components={{ Footer: LoadMoreFooter }}
+						computeItemKey={(index) => games[index].igdbId}
 						context={loadMoreContext}
 						endReached={handleEndReached}
 						itemContent={(index) => (
@@ -213,6 +214,7 @@ export default function ReleasesPage() {
 				{status === "success" && games.length > 0 && layout === "list" && (
 					<Virtuoso
 						components={{ Footer: LoadMoreFooter }}
+						computeItemKey={(index) => games[index].igdbId}
 						context={loadMoreContext}
 						endReached={handleEndReached}
 						increaseViewportBy={{
