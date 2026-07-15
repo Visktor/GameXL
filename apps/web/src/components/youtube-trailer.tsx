@@ -51,7 +51,11 @@ export function YouTubeTrailer({
 				events: {
 					onError: () => onEmbedFailureRef.current(),
 					onReady: (event) => {
-						event.target.getIframe().title = title;
+						// YT.Player defaults the iframe to a fixed 640x390px size,
+						// ignoring the wrapper's CSS — force it to fill the wrapper instead.
+						const iframe = event.target.getIframe();
+						iframe.title = title;
+						iframe.classList.add("h-full", "w-full");
 					},
 				},
 			});
