@@ -8,6 +8,7 @@ import {
 	Clock,
 	LayoutGrid,
 	List,
+	type LucideIcon,
 	Star,
 	TrendingUp,
 	Trophy,
@@ -16,6 +17,7 @@ import { useSearchParams } from "react-router";
 import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 
 import { GameCard } from "@/components/game-card";
+import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
 import { useViewPreferenceStore } from "@/stores/view-preference-store";
 import { trpcClient } from "@/utils/trpc";
 
@@ -50,6 +52,45 @@ interface LoadMoreContext {
 	hasGames: boolean;
 	hasNextPage: boolean;
 	isFetchingNextPage: boolean;
+}
+
+const SIDEBAR_BUTTON_CLASSNAME =
+	"flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent";
+const PILL_BUTTON_CLASSNAME =
+	"flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs transition-colors";
+
+function NavButton({
+	icon: Icon,
+	isActive,
+	label,
+	onClick,
+	variant,
+}: {
+	icon: LucideIcon;
+	isActive: boolean;
+	label: string;
+	onClick: () => void;
+	variant: "pill" | "sidebar";
+}) {
+	const isSidebar = variant === "sidebar";
+	const activeClassName = isSidebar
+		? "bg-accent font-medium"
+		: "border-foreground bg-accent font-medium";
+
+	return (
+		<button
+			className={`${isSidebar ? SIDEBAR_BUTTON_CLASSNAME : PILL_BUTTON_CLASSNAME} ${
+				isActive ? activeClassName : "text-muted-foreground"
+			}`}
+			onClick={onClick}
+			type="button"
+		>
+			<Icon
+				className={isSidebar ? "h-4 w-4 shrink-0" : "h-3.5 w-3.5 shrink-0"}
+			/>
+			{label}
+		</button>
+	);
 }
 
 function LoadMoreFooter({ context }: { context: LoadMoreContext }) {
@@ -101,59 +142,86 @@ export default function ReleasesPage() {
 	};
 
 	return (
-		<div className="flex h-full overflow-hidden">
-			{/* Sidebar */}
-			<aside className="flex w-44 shrink-0 flex-col gap-1 border-r p-3">
-				{SPANS.map(({ key, label, icon: Icon }) => (
-					<button
-						className={`flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-							span === key ? "bg-accent font-medium" : "text-muted-foreground"
-						}`}
+		<div className="flex h-full flex-col overflow-hidden lg:flex-row">
+			{/* Sidebar (lg and up) */}
+			<aside className="hidden shrink-0 flex-col gap-1 border-r p-3 lg:flex lg:w-44">
+				{SPANS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={span === key}
 						key={key}
+						label={label}
 						onClick={() => setSearchParams({ span: key, sortBy })}
-						type="button"
-					>
-						<Icon className="h-4 w-4 shrink-0" />
-						{label}
-					</button>
+						variant="sidebar"
+					/>
 				))}
 				<div className="my-2 border-t" />
 				<p className="px-3 pb-1 text-muted-foreground text-xs">Sort by</p>
-				{SORTS.map(({ key, label, icon: Icon }) => (
-					<button
-						className={`flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-							sortBy === key ? "bg-accent font-medium" : "text-muted-foreground"
-						}`}
+				{SORTS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={sortBy === key}
 						key={key}
+						label={label}
 						onClick={() => setSearchParams({ span, sortBy: key })}
-						type="button"
-					>
-						<Icon className="h-4 w-4 shrink-0" />
-						{label}
-					</button>
+						variant="sidebar"
+					/>
 				))}
 				<div className="my-2 border-t" />
 				<p className="px-3 pb-1 text-muted-foreground text-xs">View</p>
-				{LAYOUTS.map(({ key, label, icon: Icon }) => (
-					<button
-						className={`flex items-center gap-2 rounded-sm px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-							layout === key ? "bg-accent font-medium" : "text-muted-foreground"
-						}`}
+				{LAYOUTS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={layout === key}
 						key={key}
+						label={label}
 						onClick={() => setLayout(key)}
-						type="button"
-					>
-						<Icon className="h-4 w-4 shrink-0" />
-						{label}
-					</button>
+						variant="sidebar"
+					/>
 				))}
 			</aside>
+
+			{/* Filter bar (below lg) */}
+			<div className="flex shrink-0 gap-2 overflow-x-auto border-b p-3 lg:hidden">
+				{SPANS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={span === key}
+						key={key}
+						label={label}
+						onClick={() => setSearchParams({ span: key, sortBy })}
+						variant="pill"
+					/>
+				))}
+				<div className="mx-1 w-px shrink-0 bg-border" />
+				{SORTS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={sortBy === key}
+						key={key}
+						label={label}
+						onClick={() => setSearchParams({ span, sortBy: key })}
+						variant="pill"
+					/>
+				))}
+				<div className="mx-1 w-px shrink-0 bg-border" />
+				{LAYOUTS.map(({ key, label, icon }) => (
+					<NavButton
+						icon={icon}
+						isActive={layout === key}
+						key={key}
+						label={label}
+						onClick={() => setLayout(key)}
+						variant="pill"
+					/>
+				))}
+			</div>
 
 			{/* Main content */}
 			<main className="flex-1 overflow-hidden p-4">
 				{status === "pending" && layout === "grid" && (
 					<div className="h-full overflow-y-auto">
-						<div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+						<div className={GAME_GRID_CLASSNAME}>
 							{Array.from({ length: 20 }).map((_, i) => (
 								// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
 								<div key={i}>
@@ -204,7 +272,7 @@ export default function ReleasesPage() {
 						itemContent={(index) => (
 							<GameCard game={games[index]} layout="grid" />
 						)}
-						listClassName="grid grid-cols-2 gap-4 sm:grid-cols-5"
+						listClassName={GAME_GRID_CLASSNAME}
 						overscan={SCROLL_OVERSCAN_PX}
 						style={{ height: "100%", scrollbarGutter: "stable" }}
 						totalCount={games.length}
