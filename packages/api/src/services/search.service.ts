@@ -35,7 +35,7 @@ export async function searchGames({
 		igdbGames = await queryIGDB<IGDBGame[]>(
 			"games",
 			`${buildFilterClause(input.mode, input.q)}
-			 fields id, name, cover.url, first_release_date, rating, videos.video_id, videos.name;
+			 fields id, name, cover.url, screenshots.url, first_release_date, rating, videos.video_id, videos.name;
 			 limit ${DEFAULT_PAGE_SIZE};
 			 offset ${input.offset};`
 		);

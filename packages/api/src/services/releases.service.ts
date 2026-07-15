@@ -41,7 +41,7 @@ export async function listReleases({
 	try {
 		igdbGames = await queryIGDB<IGDBGame[]>(
 			"games",
-			`fields id, name, cover.url, first_release_date, rating, rating_count, total_rating, videos.video_id, videos.name;
+			`fields id, name, cover.url, screenshots.url, first_release_date, rating, rating_count, total_rating, videos.video_id, videos.name;
 			 where first_release_date >= ${start} & first_release_date <= ${end};
 			 sort ${sort};
 			 limit ${DEFAULT_PAGE_SIZE};
