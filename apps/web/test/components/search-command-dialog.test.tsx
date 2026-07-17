@@ -6,8 +6,21 @@ import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SearchCommandDialog } from "@/components/search-command-dialog";
 import { useSearchStore } from "@/stores/search-store";
+import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { server } from "../support/msw-server";
-import { mockTrpcQuery } from "../support/trpc-msw";
+import { mockTrpcMutation, mockTrpcQuery } from "../support/trpc-msw";
+
+vi.mock("sonner", () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+// Base UI's Select is also floating-ui backed and hits the same dual-React
+// "invalid hook call" as Dialog under Vitest/happy-dom (see note below) —
+// stubbed so rendering a result row doesn't crash the whole suite. The
+// mouse path through StatusSelect is exercised manually, not here.
+vi.mock("@/components/status-select", () => ({
+	StatusSelect: () => null,
+}));
 
 const navigateSpy = vi.fn();
 
@@ -46,6 +59,7 @@ function renderSearchCommandDialog(): ReturnType<typeof render> {
 
 beforeEach(() => {
 	useSearchStore.getState().reset();
+	useTrackedGamesStore.setState({ statusByGameId: {} });
 	navigateSpy.mockClear();
 });
 
@@ -122,5 +136,177 @@ describe("SearchCommandDialog", () => {
 			).not.toBeInTheDocument();
 		});
 		expect(useSearchStore.getState().query).toBe("");
+	});
+
+	it("quick-adds the highlighted result to WANT on Cmd+Enter", async () => {
+		let receivedInput: unknown;
+		server.use(
+			mockTrpcQuery(SERVER_URL, "search.list", () => ({
+				games: [
+					{
+						igdbId: "1",
+						title: "Hollow Knight",
+						coverUrl: null,
+						trailerVideoId: null,
+						releaseDate: null,
+						igdbScore: null,
+						trackedStatus: null,
+					},
+				],
+				nextOffset: null,
+			})),
+			mockTrpcMutation(SERVER_URL, "userGame.add", (input) => {
+				receivedInput = input;
+				return undefined;
+			})
+		);
+
+		const user = userEvent.setup();
+		renderSearchCommandDialog();
+
+		await user.keyboard("{Meta>}k{/Meta}");
+		const input = await screen.findByPlaceholderText(SEARCH_PLACEHOLDER);
+		await user.type(input, "hollow");
+		await screen.findByText("Hollow Knight");
+
+		// No ArrowDown needed — the first result is highlighted by default.
+		await user.keyboard("{Meta>}{Enter}{/Meta}");
+
+		await waitFor(() => {
+			expect(receivedInput).toMatchObject({
+				gameData: { igdbId: "1", title: "Hollow Knight" },
+				status: "WANT",
+			});
+		});
+		// Cmd+Enter must not also trigger the row's own Enter-to-navigate.
+		expect(navigateSpy).not.toHaveBeenCalled();
+	});
+
+	it("cycles the highlighted result's status forward on Alt+ArrowRight", async () => {
+		let receivedInput: unknown;
+		server.use(
+			mockTrpcQuery(SERVER_URL, "search.list", () => ({
+				games: [
+					{
+						igdbId: "1",
+						title: "Hollow Knight",
+						coverUrl: null,
+						trailerVideoId: null,
+						releaseDate: null,
+						igdbScore: null,
+						trackedStatus: null,
+					},
+				],
+				nextOffset: null,
+			})),
+			mockTrpcMutation(SERVER_URL, "userGame.add", (input) => {
+				receivedInput = input;
+				return undefined;
+			})
+		);
+
+		const user = userEvent.setup();
+		renderSearchCommandDialog();
+
+		await user.keyboard("{Meta>}k{/Meta}");
+		const input = await screen.findByPlaceholderText(SEARCH_PLACEHOLDER);
+		await user.type(input, "hollow");
+		await screen.findByText("Hollow Knight");
+
+		// untracked → PLAYING (the first entry in GAME_STATUSES).
+		await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
+
+		await waitFor(() => {
+			expect(receivedInput).toMatchObject({
+				gameData: { igdbId: "1", title: "Hollow Knight" },
+				status: "PLAYING",
+			});
+		});
+	});
+
+	it("cycles the highlighted result's status backward on Alt+ArrowLeft", async () => {
+		let receivedInput: unknown;
+		server.use(
+			mockTrpcQuery(SERVER_URL, "search.list", () => ({
+				games: [
+					{
+						igdbId: "1",
+						title: "Hollow Knight",
+						coverUrl: null,
+						trailerVideoId: null,
+						releaseDate: null,
+						igdbScore: null,
+						trackedStatus: null,
+					},
+				],
+				nextOffset: null,
+			})),
+			mockTrpcMutation(SERVER_URL, "userGame.add", (input) => {
+				receivedInput = input;
+				return undefined;
+			})
+		);
+
+		const user = userEvent.setup();
+		renderSearchCommandDialog();
+
+		await user.keyboard("{Meta>}k{/Meta}");
+		const input = await screen.findByPlaceholderText(SEARCH_PLACEHOLDER);
+		await user.type(input, "hollow");
+		await screen.findByText("Hollow Knight");
+
+		// untracked → WANT (wraps backward to the last entry in the cycle).
+		await user.keyboard("{Alt>}{ArrowLeft}{/Alt}");
+
+		await waitFor(() => {
+			expect(receivedInput).toMatchObject({
+				gameData: { igdbId: "1", title: "Hollow Knight" },
+				status: "WANT",
+			});
+		});
+	});
+
+	it("removes the highlighted result on Cmd+Enter when it's already WANT", async () => {
+		let addCalled = false;
+		let removeReceived: unknown;
+		server.use(
+			mockTrpcQuery(SERVER_URL, "search.list", () => ({
+				games: [
+					{
+						igdbId: "1",
+						title: "Hollow Knight",
+						coverUrl: null,
+						trailerVideoId: null,
+						releaseDate: null,
+						igdbScore: null,
+						trackedStatus: "WANT",
+					},
+				],
+				nextOffset: null,
+			})),
+			mockTrpcMutation(SERVER_URL, "userGame.add", () => {
+				addCalled = true;
+				return undefined;
+			}),
+			mockTrpcMutation(SERVER_URL, "userGame.remove", (input) => {
+				removeReceived = input;
+				return undefined;
+			})
+		);
+
+		const user = userEvent.setup();
+		renderSearchCommandDialog();
+
+		await user.keyboard("{Meta>}k{/Meta}");
+		const input = await screen.findByPlaceholderText(SEARCH_PLACEHOLDER);
+		await user.type(input, "hollow");
+		await screen.findByText("Hollow Knight");
+
+		await user.keyboard("{Meta>}{Enter}{/Meta}");
+
+		await waitFor(() => {
+			expect(removeReceived).toMatchObject({ igdbId: "1" });
+		});
+		expect(addCalled).toBe(false);
 	});
 });

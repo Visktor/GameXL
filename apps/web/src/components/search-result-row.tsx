@@ -1,5 +1,10 @@
+import { Button } from "@GameXL/ui/components/button";
+import { Heart } from "lucide-react";
 import type { ReleaseGame } from "@/components/game-card";
 import { StarRating } from "@/components/star-rating";
+import { StatusSelect } from "@/components/status-select";
+import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
+import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 
 const RATING_SCALE = 20;
 
@@ -7,6 +12,13 @@ export function SearchResultRow({ game }: { game: ReleaseGame }) {
 	const year = game.releaseDate
 		? new Date(game.releaseDate * 1000).getFullYear()
 		: null;
+
+	const storedStatus = useTrackedGamesStore(
+		(state) => state.statusByGameId[game.igdbId]
+	);
+	const trackedStatus = storedStatus ?? game.trackedStatus;
+	const { addMutation, removeMutation, toggleStatus } = useTrackGameMutation();
+	const isPending = addMutation.isPending || removeMutation.isPending;
 
 	return (
 		<div className="flex w-full items-center gap-3">
@@ -32,6 +44,40 @@ export function SearchResultRow({ game }: { game: ReleaseGame }) {
 					)}
 					{year ? <span>{year}</span> : null}
 				</div>
+			</div>
+			{/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: only stops the click from bubbling to the parent CommandItem's row-select handler; the actual interactive controls are the Button/StatusSelect below */}
+			{/* biome-ignore lint/a11y/useKeyWithClickEvents: not a real interactive element, so no keyboard equivalent is needed */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: same as above — this div is just an event-propagation firewall, not a control */}
+			<div
+				className="flex shrink-0 items-center gap-1"
+				onClick={(e) => e.stopPropagation()}
+			>
+				<Button
+					aria-label={
+						trackedStatus === "WANT"
+							? "Remove from want to play"
+							: "Want to play"
+					}
+					aria-pressed={trackedStatus === "WANT"}
+					disabled={isPending}
+					onClick={() => toggleStatus(game, "WANT")}
+					size="icon-xs"
+					type="button"
+					variant="ghost"
+				>
+					<Heart
+						className={
+							trackedStatus === "WANT"
+								? "h-4 w-4 fill-rose-500 text-rose-500"
+								: "h-4 w-4"
+						}
+					/>
+				</Button>
+				<StatusSelect
+					disabled={isPending}
+					onChange={(status) => toggleStatus(game, status)}
+					value={trackedStatus}
+				/>
 			</div>
 		</div>
 	);
