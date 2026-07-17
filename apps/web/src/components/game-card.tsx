@@ -74,14 +74,50 @@ function GameCover({
 	);
 }
 
+function GameCardStatusRow({
+	isQuickAddPending,
+	onQuickAddStatus,
+	readOnly,
+	score,
+	trackedStatus,
+}: {
+	isQuickAddPending: boolean;
+	onQuickAddStatus: (status: GameStatus) => void;
+	readOnly: boolean;
+	score: number | null;
+	trackedStatus: GameStatus | null;
+}) {
+	return (
+		<GameStatusPill>
+			<GameStatusPill.Rating score={score} />
+			{trackedStatus ? (
+				<>
+					<GameStatusPill.Divider />
+					<GameStatusPill.StatusIcon status={trackedStatus} />
+				</>
+			) : (
+				!readOnly && (
+					<>
+						<GameStatusPill.Divider />
+						<GameStatusPill.QuickAdd
+							isPending={isQuickAddPending}
+							onSelectStatus={onQuickAddStatus}
+						/>
+					</>
+				)
+			)}
+		</GameStatusPill>
+	);
+}
+
 function GameCardGridBody({
+	children,
 	game,
 	imagePriority,
-	statusSlot,
 }: {
+	children: ReactNode;
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	statusSlot: ReactNode;
 }) {
 	return (
 		<div className="overflow-hidden rounded-sm border border-border">
@@ -97,25 +133,20 @@ function GameCardGridBody({
 				height regardless of title length — VirtuosoGrid assumes uniform
 				item size and jitters otherwise. */}
 				<p className="truncate text-sm">{game.title}</p>
-				<div className="mt-1">
-					<GameStatusPill>
-						<GameStatusPill.Rating score={game.igdbScore} />
-						{statusSlot}
-					</GameStatusPill>
-				</div>
+				<div className="mt-1">{children}</div>
 			</div>
 		</div>
 	);
 }
 
 function GameCardListBody({
+	children,
 	game,
 	imagePriority,
-	statusSlot,
 }: {
+	children: ReactNode;
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	statusSlot: ReactNode;
 }) {
 	return (
 		<>
@@ -128,12 +159,7 @@ function GameCardListBody({
 			</Link>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm">{game.title}</p>
-				<div className="mt-0.5">
-					<GameStatusPill>
-						<GameStatusPill.Rating score={game.igdbScore} />
-						{statusSlot}
-					</GameStatusPill>
-				</div>
+				<div className="mt-0.5">{children}</div>
 			</div>
 		</>
 	);
@@ -246,21 +272,14 @@ export function GameCard({
 	const handleQuickAddStatus = (status: GameStatus) =>
 		addMutation.mutate(status);
 
-	const statusSlot = trackedStatus ? (
-		<>
-			<GameStatusPill.Divider />
-			<GameStatusPill.StatusIcon status={trackedStatus} />
-		</>
-	) : (
-		!readOnly && (
-			<>
-				<GameStatusPill.Divider />
-				<GameStatusPill.QuickAdd
-					isPending={addMutation.isPending}
-					onSelectStatus={handleQuickAddStatus}
-				/>
-			</>
-		)
+	const statusRow = (
+		<GameCardStatusRow
+			isQuickAddPending={addMutation.isPending}
+			onQuickAddStatus={handleQuickAddStatus}
+			readOnly={readOnly}
+			score={game.igdbScore}
+			trackedStatus={trackedStatus}
+		/>
 	);
 
 	return (
@@ -279,17 +298,13 @@ export function GameCard({
 				}
 			>
 				{isList ? (
-					<GameCardListBody
-						game={game}
-						imagePriority={imagePriority}
-						statusSlot={statusSlot}
-					/>
+					<GameCardListBody game={game} imagePriority={imagePriority}>
+						{statusRow}
+					</GameCardListBody>
 				) : (
-					<GameCardGridBody
-						game={game}
-						imagePriority={imagePriority}
-						statusSlot={statusSlot}
-					/>
+					<GameCardGridBody game={game} imagePriority={imagePriority}>
+						{statusRow}
+					</GameCardGridBody>
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
