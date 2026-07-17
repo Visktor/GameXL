@@ -55,6 +55,12 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
   - Include keyboard event handlers alongside mouse events
   - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
 
+### Styling (Tailwind)
+
+- Use `cn()` from `@GameXL/ui/lib/utils` (clsx + tailwind-merge) instead of hand-interpolating template-literal class strings whenever merging 2+ conditional classes or merging with a caller-supplied `className` prop — plain string interpolation doesn't dedupe conflicting Tailwind utilities (`twMerge` does), and `clsx` skips falsy branches cleanly. A single one-off ternary (e.g. `score === null ? "opacity-40" : ""`) is fine as-is.
+- Use `cva()` (`class-variance-authority`, already a dependency) for components with enumerable variant axes (size, tone, state) instead of ad-hoc conditionals — see `packages/ui/src/components/tabs.tsx` and `button.tsx` for the convention. Define the variant map outside the component body so it isn't rebuilt every render.
+- Order inside `cn()`: base classes → conditionals → caller `className` override last, so the caller can win.
+
 ### State Management
 
 - `useState` is for **UI-local** state only: toggles, hover/focus flags, open/closed, input focus — state with no meaning outside the component.
