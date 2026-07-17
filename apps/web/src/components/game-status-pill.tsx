@@ -1,13 +1,7 @@
 import { StarRating } from "@/components/star-rating";
 import { StatusQuickAdd } from "@/components/status-quick-add";
 import type { GameStatus } from "@/constants/game-status";
-import { GAME_STATUS_META } from "@/constants/game-status";
-
-const ENGAGED_STATUSES = new Set<GameStatus>([
-	"PLAYING",
-	"COMPLETED",
-	"WISHLIST",
-]);
+import { ENGAGED_STATUSES, GAME_STATUS_META } from "@/constants/game-status";
 
 function StatusIcon({ status }: { status: GameStatus }) {
 	const { icon: Icon, label } = GAME_STATUS_META[status];

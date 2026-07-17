@@ -15,13 +15,12 @@ import { WishlistButton } from "@/components/wishlist-button";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
 import {
 	GAME_STATUS_META,
-	GAME_STATUSES,
+	GAME_STATUSES_ENUM,
 	type GameStatus,
+	TRACK_STATUSES,
 } from "@/constants/game-status";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
-
-const TRACK_STATUSES = GAME_STATUSES.filter((status) => status !== "WISHLIST");
 
 export interface ReleaseGame {
 	coverUrl: string | null;
@@ -255,10 +254,10 @@ export function GameCard({
 
 	const isFavoritePending = addMutation.isPending || removeMutation.isPending;
 	const handleToggleFavorite = () => {
-		if (trackedStatus === "WISHLIST") {
+		if (trackedStatus === GAME_STATUSES_ENUM.WISHLIST) {
 			removeMutation.mutate();
 		} else {
-			addMutation.mutate("WISHLIST");
+			addMutation.mutate(GAME_STATUSES_ENUM.WISHLIST);
 		}
 	};
 	const handleQuickAddStatus = (status: GameStatus) =>
@@ -329,7 +328,7 @@ export function GameCard({
 					<div className="flex flex-wrap items-center gap-1.5">
 						{readOnly ? (
 							trackedStatus &&
-							trackedStatus !== "WISHLIST" && (
+							trackedStatus !== GAME_STATUSES_ENUM.WISHLIST && (
 								<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
 									{(() => {
 										const { icon: Icon, label } =
