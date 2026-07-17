@@ -37,9 +37,11 @@ export interface ReleaseGame {
 function GameCover({
 	className,
 	game,
+	imagePriority,
 }: {
 	className: string;
 	game: ReleaseGame;
+	imagePriority: "auto" | "high" | "low";
 }) {
 	const hasTrailer = Boolean(game.trailerVideoId);
 	const TrailerIcon = hasTrailer ? Video : VideoOff;
@@ -52,6 +54,7 @@ function GameCover({
 				<img
 					alt={game.title}
 					className="h-full w-full object-cover transition-transform group-hover:scale-105"
+					fetchPriority={imagePriority}
 					height={374}
 					src={game.coverUrl}
 					width={264}
@@ -72,10 +75,20 @@ function GameCover({
 	);
 }
 
-function GameCardGridBody({ game }: { game: ReleaseGame }) {
+function GameCardGridBody({
+	game,
+	imagePriority,
+}: {
+	game: ReleaseGame;
+	imagePriority: "auto" | "high" | "low";
+}) {
 	return (
 		<>
-			<GameCover className="aspect-3/4 w-full" game={game} />
+			<GameCover
+				className="aspect-3/4 w-full"
+				game={game}
+				imagePriority={imagePriority}
+			/>
 			{/* Truncated to 1 line (not 2) so every grid card measures the same
 			height regardless of title length — VirtuosoGrid assumes uniform
 			item size and jitters otherwise. */}
@@ -89,10 +102,20 @@ function GameCardGridBody({ game }: { game: ReleaseGame }) {
 	);
 }
 
-function GameCardListBody({ game }: { game: ReleaseGame }) {
+function GameCardListBody({
+	game,
+	imagePriority,
+}: {
+	game: ReleaseGame;
+	imagePriority: "auto" | "high" | "low";
+}) {
 	return (
 		<>
-			<GameCover className="aspect-3/4 h-16 w-12 shrink-0" game={game} />
+			<GameCover
+				className="aspect-3/4 h-16 w-12 shrink-0"
+				game={game}
+				imagePriority={imagePriority}
+			/>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm">{game.title}</p>
 				{game.igdbScore !== null && (
@@ -154,10 +177,14 @@ function HoverPreviewMedia({
 
 export function GameCard({
 	game,
+	imagePriority = "auto",
 	layout = "grid",
 	readOnly = false,
 }: {
 	game: ReleaseGame;
+	/** Hints the browser's fetch priority for the cover image. "high" for
+	 * above-the-fold cards, "low" for cards preloaded ahead of scroll. */
+	imagePriority?: "auto" | "high" | "low";
 	layout?: "grid" | "list";
 	/** Viewing someone else's list: show status as a badge, no edit controls. */
 	readOnly?: boolean;
@@ -214,9 +241,9 @@ export function GameCard({
 				}
 			>
 				{isList ? (
-					<GameCardListBody game={game} />
+					<GameCardListBody game={game} imagePriority={imagePriority} />
 				) : (
-					<GameCardGridBody game={game} />
+					<GameCardGridBody game={game} imagePriority={imagePriority} />
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">

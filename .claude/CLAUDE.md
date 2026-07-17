@@ -109,6 +109,21 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 - Don't use `.only` or `.skip` in committed code
 - Keep test suites reasonably flat - avoid excessive `describe` nesting
 
+### E2E Testing (Playwright)
+
+- Location: `apps/web/e2e/*.spec.ts`. Run with `cd apps/web && pnpm e2e` (or `pnpm --filter web e2e` from the repo root).
+- Config lives at `apps/web/playwright.config.ts`. It has its own `webServer` that auto-starts a dedicated Vite instance on port `3457` — never reuses the normal dev-server ports (web `5180`, server `3050`), so running e2e tests doesn't conflict with a dev session already running.
+- **No real backend or database.** Every tRPC call is intercepted with `page.route` — don't spin up the server/DB to run these tests. Use the `mockTrpcProcedure(page, procedurePath, responder)` helper in `apps/web/e2e/support/trpc-route.ts`:
+  ```ts
+  await mockTrpcProcedure(page, "releases.list", (input) => ({
+    games: [...],
+    nextOffset: null,
+  }));
+  ```
+- Mock the auth session too, for logged-out flows: `page.route("**/api/auth/get-session**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }))`.
+- Use web-first assertions (`await expect(locator).toBeVisible()`, `expect.poll(...)`) instead of manual `waitForTimeout`/sleeps — they retry until the condition holds or the timeout expires.
+- Prefer user-facing locators (`getByRole`, `getByPlaceholder`) over raw CSS selectors when the target has an accessible role/name.
+
 ## When Biome Can't Help
 
 Biome's linter will catch most issues automatically. Focus your attention on:

@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from "@GameXL/api/utils/pagination";
 import { Skeleton } from "@GameXL/ui/components/skeleton";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -13,8 +14,9 @@ import {
 	TrendingUp,
 	Trophy,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
+import { type ListRange, Virtuoso, VirtuosoGrid } from "react-virtuoso";
 
 import { GameCard } from "@/components/game-card";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
@@ -129,8 +131,37 @@ export default function ReleasesPage() {
 
 	const games = data?.pages.flatMap((p) => p.games) ?? [];
 
+	// Warm the browser's image cache for a newly-arrived page before its cards
+	// mount, so decode is already done by the time the user scrolls to them.
+	useEffect(() => {
+		const lastPage = data?.pages.at(-1);
+		if (!lastPage) {
+			return;
+		}
+		for (const game of lastPage.games) {
+			if (game.coverUrl) {
+				const preloadImage = new Image();
+				preloadImage.src = game.coverUrl;
+			}
+		}
+	}, [data]);
+
 	const handleEndReached = () => {
 		if (hasNextPage && !isFetchingNextPage) {
+			fetchNextPage();
+		}
+	};
+
+	// Fires well before endReached (which only accounts for render overscan):
+	// once the rendered range is within a full page of the loaded end, fetch
+	// the next page so fast/fling scrolling doesn't outrun the network.
+	const handleRangeChanged = ({ endIndex }: ListRange) => {
+		const itemsRemaining = games.length - endIndex;
+		if (
+			itemsRemaining <= DEFAULT_PAGE_SIZE &&
+			hasNextPage &&
+			!isFetchingNextPage
+		) {
 			fetchNextPage();
 		}
 	};
@@ -270,10 +301,15 @@ export default function ReleasesPage() {
 						context={loadMoreContext}
 						endReached={handleEndReached}
 						itemContent={(index) => (
-							<GameCard game={games[index]} layout="grid" />
+							<GameCard
+								game={games[index]}
+								imagePriority={index < DEFAULT_PAGE_SIZE ? "high" : "low"}
+								layout="grid"
+							/>
 						)}
 						listClassName={GAME_GRID_CLASSNAME}
 						overscan={SCROLL_OVERSCAN_PX}
+						rangeChanged={handleRangeChanged}
 						style={{ height: "100%", scrollbarGutter: "stable" }}
 						totalCount={games.length}
 					/>
@@ -290,8 +326,13 @@ export default function ReleasesPage() {
 							top: SCROLL_OVERSCAN_PX,
 						}}
 						itemContent={(index) => (
-							<GameCard game={games[index]} layout="list" />
+							<GameCard
+								game={games[index]}
+								imagePriority={index < DEFAULT_PAGE_SIZE ? "high" : "low"}
+								layout="list"
+							/>
 						)}
+						rangeChanged={handleRangeChanged}
 						style={{ height: "100%" }}
 						totalCount={games.length}
 					/>
