@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@GameXL/ui/lib/utils";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
