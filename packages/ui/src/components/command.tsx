@@ -121,14 +121,18 @@ function CommandDialog({
 	className,
 	showCloseButton = true,
 	shouldFilter,
+	value,
+	onValueChange,
 	...props
 }: Omit<React.ComponentProps<typeof Dialog>, "children"> & {
 	children?: React.ReactNode;
 	className?: string;
 	description?: string;
+	onValueChange?: (value: string) => void;
 	shouldFilter?: boolean;
 	showCloseButton?: boolean;
 	title?: string;
+	value?: string;
 }) {
 	return (
 		<Dialog {...props}>
@@ -138,7 +142,13 @@ function CommandDialog({
 			>
 				<DialogTitle className="sr-only">{title}</DialogTitle>
 				<DialogDescription className="sr-only">{description}</DialogDescription>
-				<Command shouldFilter={shouldFilter}>{children}</Command>
+				<Command
+					onValueChange={onValueChange}
+					shouldFilter={shouldFilter}
+					value={value}
+				>
+					{children}
+				</Command>
 			</DialogContent>
 		</Dialog>
 	);

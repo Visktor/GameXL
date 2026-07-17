@@ -7,17 +7,29 @@ import {
 	CommandList,
 } from "@GameXL/ui/components/command";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useDebounceCallback } from "usehooks-ts";
 import { useShallow } from "zustand/react/shallow";
 
 import { SearchResultRow } from "@/components/search-result-row";
+import { GAME_STATUSES, type GameStatus } from "@/constants/game-status";
+import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
 import { useSearchStore } from "@/stores/search-store";
+import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
 const PREVIEW_LIMIT = 6;
 const DEBOUNCE_MS = 300;
+
+/**
+ * Option/Alt+ArrowRight/ArrowLeft cycles the highlighted result
+ * forward/backward through untracked → every status → back to untracked.
+ * Ctrl+Arrow was tried first but macOS binds it to Mission Control
+ * Space-switching by default, which eats the keystroke before the browser
+ * sees it (asymmetrically, depending which Space you're on).
+ */
+const STATUS_CYCLE: (GameStatus | null)[] = [null, ...GAME_STATUSES];
 
 export function SearchCommandDialog() {
 	const navigate = useNavigate();
@@ -44,6 +56,8 @@ export function SearchCommandDialog() {
 		setDebouncedQuery,
 		DEBOUNCE_MS
 	);
+	const { addMutation, removeMutation, toggleStatus } = useTrackGameMutation();
+	const [highlightedGameId, setHighlightedGameId] = useState("");
 
 	useEffect(() => {
 		function onKeyDown(e: KeyboardEvent) {
@@ -67,7 +81,20 @@ export function SearchCommandDialog() {
 		enabled: debouncedQuery.length > 0,
 	});
 
-	const games = data?.games.slice(0, PREVIEW_LIMIT) ?? [];
+	const games = useMemo(
+		() => data?.games.slice(0, PREVIEW_LIMIT) ?? [],
+		[data]
+	);
+
+	useEffect(() => {
+		if (games.length === 0) {
+			setHighlightedGameId("");
+			return;
+		}
+		if (!games.some((game) => game.igdbId === highlightedGameId)) {
+			setHighlightedGameId(games[0].igdbId);
+		}
+	}, [games, highlightedGameId]);
 
 	function goToResults(q: string) {
 		if (!q.trim()) {
@@ -92,11 +119,58 @@ export function SearchCommandDialog() {
 					reset();
 				}
 			}}
+			onValueChange={setHighlightedGameId}
 			open={open}
 			shouldFilter={false}
+			value={highlightedGameId}
 		>
 			<CommandInput
 				onKeyDown={(e) => {
+					const highlightedGame = games.find(
+						(game) => game.igdbId === highlightedGameId
+					);
+					const isMutating = addMutation.isPending || removeMutation.isPending;
+
+					if (
+						highlightedGame &&
+						!isMutating &&
+						(e.metaKey || e.ctrlKey) &&
+						e.key === "Enter"
+					) {
+						e.preventDefault();
+						e.stopPropagation();
+						toggleStatus(highlightedGame, "WANT");
+						return;
+					}
+
+					if (
+						highlightedGame &&
+						!isMutating &&
+						e.altKey &&
+						!(e.metaKey || e.ctrlKey || e.shiftKey) &&
+						(e.key === "ArrowRight" || e.key === "ArrowLeft")
+					) {
+						e.preventDefault();
+						e.stopPropagation();
+						const currentStatus =
+							useTrackedGamesStore.getState().statusByGameId[
+								highlightedGame.igdbId
+							] ?? highlightedGame.trackedStatus;
+						const direction = e.key === "ArrowRight" ? 1 : -1;
+						const nextIndex =
+							(STATUS_CYCLE.indexOf(currentStatus) +
+								direction +
+								STATUS_CYCLE.length) %
+							STATUS_CYCLE.length;
+						const nextStatus = STATUS_CYCLE[nextIndex];
+						if (nextStatus) {
+							addMutation.mutate({ game: highlightedGame, status: nextStatus });
+						} else {
+							removeMutation.mutate({ game: highlightedGame });
+						}
+						return;
+					}
+
 					if (e.key === "Enter" && games.length === 0) {
 						goToResults(query);
 					}
