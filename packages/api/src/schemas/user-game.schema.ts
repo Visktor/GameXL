@@ -13,7 +13,7 @@ export const gameStatusSchema = z.enum([
 	"PLAYING",
 	"COMPLETED",
 	"DROPPED",
-	"WANT",
+	"WISHLIST",
 	"ON_HOLD",
 ]);
 

@@ -38,7 +38,7 @@ describe("releases.list", () => {
 			},
 		]);
 		mockedDb.userGame.findMany.mockResolvedValue([
-			{ status: "WANT", game: { externalApiKey: "1" } },
+			{ status: "WISHLIST", game: { externalApiKey: "1" } },
 		]);
 
 		const caller = appRouter.createCaller(
@@ -61,7 +61,7 @@ describe("releases.list", () => {
 				trailerVideoId: null,
 				releaseDate: 1_600_000_000,
 				igdbScore: 90,
-				trackedStatus: "WANT",
+				trackedStatus: "WISHLIST",
 			},
 		]);
 		expect(result.nextOffset).toBeNull();

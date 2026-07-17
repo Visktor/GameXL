@@ -5,12 +5,13 @@ import {
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Gamepad2, Heart, Trash2, Video, VideoOff } from "lucide-react";
+import { Gamepad2, Trash2, Video, VideoOff } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
-import { StarRating } from "@/components/star-rating";
+import { GameStatusPill } from "@/components/game-status-pill";
 import { StatusButtonGroup } from "@/components/status-select";
+import { WishlistButton } from "@/components/wishlist-button";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
 import {
 	GAME_STATUS_META,
@@ -20,7 +21,7 @@ import {
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
-const TRACK_STATUSES = GAME_STATUSES.filter((status) => status !== "WANT");
+const TRACK_STATUSES = GAME_STATUSES.filter((status) => status !== "WISHLIST");
 
 export interface ReleaseGame {
 	coverUrl: string | null;
@@ -32,51 +33,6 @@ export interface ReleaseGame {
 	trailerVideoId: string | null;
 	/** Epoch ms this game's tracked status was last updated. Only set on list pages. */
 	updatedAt?: number;
-}
-
-function FavoriteButton({
-	isPending,
-	onToggle,
-	readOnly,
-	trackedStatus,
-}: {
-	isPending: boolean;
-	onToggle: () => void;
-	readOnly: boolean;
-	trackedStatus: GameStatus | null;
-}) {
-	const isWant = trackedStatus === "WANT";
-
-	if (readOnly) {
-		return (
-			<Heart
-				className={
-					isWant
-						? "h-4 w-4 fill-rose-500 text-rose-500"
-						: "h-4 w-4 text-muted-foreground"
-				}
-			/>
-		);
-	}
-
-	return (
-		<Button
-			aria-label={isWant ? "Remove from want to play" : "Want to play"}
-			aria-pressed={isWant}
-			disabled={isPending}
-			onClick={(e) => {
-				e.preventDefault();
-				onToggle();
-			}}
-			size="icon-xs"
-			type="button"
-			variant="ghost"
-		>
-			<Heart
-				className={isWant ? "h-4 w-4 fill-rose-500 text-rose-500" : "h-4 w-4"}
-			/>
-		</Button>
-	);
 }
 
 function GameCover({
@@ -92,9 +48,7 @@ function GameCover({
 	const TrailerIcon = hasTrailer ? Video : VideoOff;
 
 	return (
-		<div
-			className={`relative overflow-hidden rounded-sm bg-muted ${className}`}
-		>
+		<div className={`relative overflow-hidden bg-muted ${className}`}>
 			{game.coverUrl ? (
 				<img
 					alt={game.title}
@@ -123,20 +77,20 @@ function GameCover({
 function GameCardGridBody({
 	game,
 	imagePriority,
-	isFavoritePending,
-	onToggleFavorite,
+	isQuickAddPending,
+	onQuickAddStatus,
 	readOnly,
 	trackedStatus,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	isFavoritePending: boolean;
-	onToggleFavorite: () => void;
+	isQuickAddPending: boolean;
+	onQuickAddStatus: (status: GameStatus) => void;
 	readOnly: boolean;
 	trackedStatus: GameStatus | null;
 }) {
 	return (
-		<>
+		<div className="overflow-hidden rounded-sm border border-border">
 			<Link className="block" to={`/games/${game.igdbId}`}>
 				<GameCover
 					className="aspect-3/4 w-full"
@@ -144,39 +98,37 @@ function GameCardGridBody({
 					imagePriority={imagePriority}
 				/>
 			</Link>
-			{/* Truncated to 1 line (not 2) so every grid card measures the same
-			height regardless of title length — VirtuosoGrid assumes uniform
-			item size and jitters otherwise. */}
-			<p className="mt-1 truncate text-sm">{game.title}</p>
-			<div className="mt-1 flex items-center justify-between gap-1">
-				{/* Always mounted (just hidden) so every grid card measures the same
-				height — VirtuosoGrid assumes uniform item size and jitters otherwise. */}
-				<div className={game.igdbScore === null ? "invisible" : ""}>
-					<StarRating score={game.igdbScore ?? 0} />
+			<div className="p-2">
+				{/* Truncated to 1 line (not 2) so every grid card measures the same
+				height regardless of title length — VirtuosoGrid assumes uniform
+				item size and jitters otherwise. */}
+				<p className="truncate text-sm">{game.title}</p>
+				<div className="mt-1">
+					<GameStatusPill
+						isQuickAddPending={isQuickAddPending}
+						onQuickAddStatus={onQuickAddStatus}
+						readOnly={readOnly}
+						score={game.igdbScore}
+						trackedStatus={trackedStatus}
+					/>
 				</div>
-				<FavoriteButton
-					isPending={isFavoritePending}
-					onToggle={onToggleFavorite}
-					readOnly={readOnly}
-					trackedStatus={trackedStatus}
-				/>
 			</div>
-		</>
+		</div>
 	);
 }
 
 function GameCardListBody({
 	game,
 	imagePriority,
-	isFavoritePending,
-	onToggleFavorite,
+	isQuickAddPending,
+	onQuickAddStatus,
 	readOnly,
 	trackedStatus,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	isFavoritePending: boolean;
-	onToggleFavorite: () => void;
+	isQuickAddPending: boolean;
+	onQuickAddStatus: (status: GameStatus) => void;
 	readOnly: boolean;
 	trackedStatus: GameStatus | null;
 }) {
@@ -184,19 +136,19 @@ function GameCardListBody({
 		<>
 			<Link className="shrink-0" to={`/games/${game.igdbId}`}>
 				<GameCover
-					className="aspect-3/4 h-16 w-12"
+					className="aspect-3/4 h-16 w-12 rounded-sm"
 					game={game}
 					imagePriority={imagePriority}
 				/>
 			</Link>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm">{game.title}</p>
-				<div className="mt-0.5 flex items-center gap-1">
-					{game.igdbScore !== null && <StarRating score={game.igdbScore} />}
-					<FavoriteButton
-						isPending={isFavoritePending}
-						onToggle={onToggleFavorite}
+				<div className="mt-0.5">
+					<GameStatusPill
+						isQuickAddPending={isQuickAddPending}
+						onQuickAddStatus={onQuickAddStatus}
 						readOnly={readOnly}
+						score={game.igdbScore}
 						trackedStatus={trackedStatus}
 					/>
 				</div>
@@ -303,12 +255,14 @@ export function GameCard({
 
 	const isFavoritePending = addMutation.isPending || removeMutation.isPending;
 	const handleToggleFavorite = () => {
-		if (trackedStatus === "WANT") {
+		if (trackedStatus === "WISHLIST") {
 			removeMutation.mutate();
 		} else {
-			addMutation.mutate("WANT");
+			addMutation.mutate("WISHLIST");
 		}
 	};
+	const handleQuickAddStatus = (status: GameStatus) =>
+		addMutation.mutate(status);
 
 	return (
 		<HoverCard onOpenChange={setIsHoverCardOpen}>
@@ -329,8 +283,8 @@ export function GameCard({
 					<GameCardListBody
 						game={game}
 						imagePriority={imagePriority}
-						isFavoritePending={isFavoritePending}
-						onToggleFavorite={handleToggleFavorite}
+						isQuickAddPending={addMutation.isPending}
+						onQuickAddStatus={handleQuickAddStatus}
 						readOnly={readOnly}
 						trackedStatus={trackedStatus}
 					/>
@@ -338,8 +292,8 @@ export function GameCard({
 					<GameCardGridBody
 						game={game}
 						imagePriority={imagePriority}
-						isFavoritePending={isFavoritePending}
-						onToggleFavorite={handleToggleFavorite}
+						isQuickAddPending={addMutation.isPending}
+						onQuickAddStatus={handleQuickAddStatus}
 						readOnly={readOnly}
 						trackedStatus={trackedStatus}
 					/>
@@ -351,7 +305,7 @@ export function GameCard({
 				{/* Scores + actions */}
 				<div className="p-3">
 					<div className="mb-3 flex items-center gap-2 text-sm">
-						<FavoriteButton
+						<WishlistButton
 							isPending={isFavoritePending}
 							onToggle={handleToggleFavorite}
 							readOnly={readOnly}
@@ -375,7 +329,7 @@ export function GameCard({
 					<div className="flex flex-wrap items-center gap-1.5">
 						{readOnly ? (
 							trackedStatus &&
-							trackedStatus !== "WANT" && (
+							trackedStatus !== "WISHLIST" && (
 								<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
 									{(() => {
 										const { icon: Icon, label } =

@@ -47,7 +47,7 @@ describe("userGame.add", () => {
 		});
 		const caller = appRouter.createCaller(ctx);
 
-		await caller.userGame.add({ gameData, status: "WANT" });
+		await caller.userGame.add({ gameData, status: "WISHLIST" });
 
 		expect(mockedDb.game.upsert).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -62,7 +62,7 @@ describe("userGame.add", () => {
 		expect(mockedDb.userGame.upsert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId_gameId: { userId: "user-1", gameId: "game-1" } },
-				create: { userId: "user-1", gameId: "game-1", status: "WANT" },
+				create: { userId: "user-1", gameId: "game-1", status: "WISHLIST" },
 			})
 		);
 		expect(ctx.logger.info).toHaveBeenCalledWith(
@@ -75,7 +75,7 @@ describe("userGame.add", () => {
 		const caller = appRouter.createCaller(createTestContext());
 
 		await expect(
-			caller.userGame.add({ gameData, status: "WANT" })
+			caller.userGame.add({ gameData, status: "WISHLIST" })
 		).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 	});
 });
