@@ -7,7 +7,11 @@ import {
 import { ChevronDown } from "lucide-react";
 
 import type { GameStatus } from "@/constants/game-status";
-import { GAME_STATUS_META, GAME_STATUSES } from "@/constants/game-status";
+import {
+	GAME_STATUS_META,
+	GAME_STATUSES,
+	GAME_STATUSES_ENUM,
+} from "@/constants/game-status";
 
 interface StatusQuickAddProps {
 	isPending?: boolean;
@@ -34,7 +38,7 @@ export function StatusQuickAdd({
 	const WishlistIcon = GAME_STATUS_META.WISHLIST.icon;
 	const dropdownStatuses = showWishlistOption
 		? GAME_STATUSES
-		: GAME_STATUSES.filter((status) => status !== "WISHLIST");
+		: GAME_STATUSES.filter((status) => status !== GAME_STATUSES_ENUM.WISHLIST);
 
 	return (
 		<div className="flex items-center">
@@ -45,7 +49,7 @@ export function StatusQuickAdd({
 					disabled={isPending}
 					onClick={(e) => {
 						e.preventDefault();
-						onSelectStatus("WISHLIST");
+						onSelectStatus(GAME_STATUSES_ENUM.WISHLIST);
 					}}
 					type="button"
 				>

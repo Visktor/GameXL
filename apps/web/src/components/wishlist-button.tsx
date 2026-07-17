@@ -1,6 +1,6 @@
 import { Button } from "@GameXL/ui/components/button";
 import type { GameStatus } from "@/constants/game-status";
-import { GAME_STATUS_META } from "@/constants/game-status";
+import { GAME_STATUS_META, GAME_STATUSES_ENUM } from "@/constants/game-status";
 
 interface WishlistButtonProps {
 	isPending?: boolean;
@@ -19,7 +19,7 @@ export function WishlistButton({
 	trackedStatus,
 	variant = "compact",
 }: WishlistButtonProps) {
-	const isWishlisted = trackedStatus === "WISHLIST";
+	const isWishlisted = trackedStatus === GAME_STATUSES_ENUM.WISHLIST;
 	const isCompact = variant === "compact";
 	const GiftIcon = GAME_STATUS_META.WISHLIST.icon;
 
