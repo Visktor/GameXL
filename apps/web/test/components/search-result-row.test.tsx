@@ -16,15 +16,15 @@ vi.mock("sonner", () => ({
 // Base UI's Select is floating-ui backed and hits the same dual-React
 // "invalid hook call" as Dialog under Vitest/happy-dom (see
 // search-command-dialog.test.tsx). Stubbed so these tests can render the row
-// and exercise the heart button; the StatusSelect mouse path is exercised
+// and exercise the wishlist button; the StatusSelect mouse path is exercised
 // manually, not here.
 vi.mock("@/components/status-select", () => ({
 	StatusSelect: () => null,
 }));
 
 const SERVER_URL = "http://localhost:3000";
-const WANT_BUTTON_NAME = /want to play/i;
-const REMOVE_BUTTON_NAME = /remove from want to play/i;
+const WISHLIST_BUTTON_NAME = /add to wishlist/i;
+const REMOVE_BUTTON_NAME = /remove from wishlist/i;
 
 function renderRow(game: ReleaseGame): ReturnType<typeof render> {
 	const queryClient = new QueryClient();
@@ -50,7 +50,7 @@ beforeEach(() => {
 });
 
 describe("SearchResultRow", () => {
-	it("quick-adds to Want to Play when the heart button is clicked", async () => {
+	it("quick-adds to the wishlist when the wishlist button is clicked", async () => {
 		let receivedInput: unknown;
 		server.use(
 			mockTrpcMutation(SERVER_URL, "userGame.add", (input) => {
@@ -62,17 +62,19 @@ describe("SearchResultRow", () => {
 		const user = userEvent.setup();
 		renderRow(baseGame);
 
-		await user.click(screen.getByRole("button", { name: WANT_BUTTON_NAME }));
+		await user.click(
+			screen.getByRole("button", { name: WISHLIST_BUTTON_NAME })
+		);
 
 		await waitFor(() => {
 			expect(receivedInput).toMatchObject({
 				gameData: { igdbId: "1", title: "Hollow Knight" },
-				status: "WANT",
+				status: "WISHLIST",
 			});
 		});
 	});
 
-	it("removes the game when the heart button is clicked while already Wanted", async () => {
+	it("removes the game when the wishlist button is clicked while already wishlisted", async () => {
 		let removeCalled = false;
 		server.use(
 			mockTrpcMutation(SERVER_URL, "userGame.remove", () => {
@@ -82,7 +84,7 @@ describe("SearchResultRow", () => {
 		);
 
 		const user = userEvent.setup();
-		renderRow({ ...baseGame, trackedStatus: "WANT" });
+		renderRow({ ...baseGame, trackedStatus: "WISHLIST" });
 
 		await user.click(screen.getByRole("button", { name: REMOVE_BUTTON_NAME }));
 
@@ -101,11 +103,13 @@ describe("SearchResultRow", () => {
 		const user = userEvent.setup();
 		renderRow(baseGame);
 
-		await user.click(screen.getByRole("button", { name: WANT_BUTTON_NAME }));
+		await user.click(
+			screen.getByRole("button", { name: WISHLIST_BUTTON_NAME })
+		);
 
 		await waitFor(() => {
 			expect(toast.success).toHaveBeenCalledWith(
-				"Added to Want to Play",
+				"Added to Wishlist",
 				expect.objectContaining({
 					action: expect.objectContaining({ label: "Undo" }),
 				})

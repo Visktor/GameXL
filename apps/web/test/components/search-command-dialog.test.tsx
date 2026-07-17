@@ -138,7 +138,7 @@ describe("SearchCommandDialog", () => {
 		expect(useSearchStore.getState().query).toBe("");
 	});
 
-	it("quick-adds the highlighted result to WANT on Cmd+Enter", async () => {
+	it("quick-adds the highlighted result to the wishlist on Cmd+Enter", async () => {
 		let receivedInput: unknown;
 		server.use(
 			mockTrpcQuery(SERVER_URL, "search.list", () => ({
@@ -175,7 +175,7 @@ describe("SearchCommandDialog", () => {
 		await waitFor(() => {
 			expect(receivedInput).toMatchObject({
 				gameData: { igdbId: "1", title: "Hollow Knight" },
-				status: "WANT",
+				status: "WISHLIST",
 			});
 		});
 		// Cmd+Enter must not also trigger the row's own Enter-to-navigate.
@@ -213,13 +213,13 @@ describe("SearchCommandDialog", () => {
 		await user.type(input, "hollow");
 		await screen.findByText("Hollow Knight");
 
-		// untracked → PLAYING (the first entry in GAME_STATUSES).
+		// untracked → WISHLIST (the first entry in GAME_STATUSES).
 		await user.keyboard("{Alt>}{ArrowRight}{/Alt}");
 
 		await waitFor(() => {
 			expect(receivedInput).toMatchObject({
 				gameData: { igdbId: "1", title: "Hollow Knight" },
-				status: "PLAYING",
+				status: "WISHLIST",
 			});
 		});
 	});
@@ -255,18 +255,18 @@ describe("SearchCommandDialog", () => {
 		await user.type(input, "hollow");
 		await screen.findByText("Hollow Knight");
 
-		// untracked → WANT (wraps backward to the last entry in the cycle).
+		// untracked → DROPPED (wraps backward to the last entry in the cycle).
 		await user.keyboard("{Alt>}{ArrowLeft}{/Alt}");
 
 		await waitFor(() => {
 			expect(receivedInput).toMatchObject({
 				gameData: { igdbId: "1", title: "Hollow Knight" },
-				status: "WANT",
+				status: "DROPPED",
 			});
 		});
 	});
 
-	it("removes the highlighted result on Cmd+Enter when it's already WANT", async () => {
+	it("removes the highlighted result on Cmd+Enter when it's already wishlisted", async () => {
 		let addCalled = false;
 		let removeReceived: unknown;
 		server.use(
@@ -279,7 +279,7 @@ describe("SearchCommandDialog", () => {
 						trailerVideoId: null,
 						releaseDate: null,
 						igdbScore: null,
-						trackedStatus: "WANT",
+						trackedStatus: "WISHLIST",
 					},
 				],
 				nextOffset: null,

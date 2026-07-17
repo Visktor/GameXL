@@ -1,8 +1,8 @@
-import { Button } from "@GameXL/ui/components/button";
-import { Heart } from "lucide-react";
 import type { ReleaseGame } from "@/components/game-card";
 import { StarRating } from "@/components/star-rating";
 import { StatusSelect } from "@/components/status-select";
+import { WishlistButton } from "@/components/wishlist-button";
+import { GAME_STATUSES_ENUM } from "@/constants/game-status";
 import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 
@@ -52,27 +52,12 @@ export function SearchResultRow({ game }: { game: ReleaseGame }) {
 				className="flex shrink-0 items-center gap-1"
 				onClick={(e) => e.stopPropagation()}
 			>
-				<Button
-					aria-label={
-						trackedStatus === "WANT"
-							? "Remove from want to play"
-							: "Want to play"
-					}
-					aria-pressed={trackedStatus === "WANT"}
-					disabled={isPending}
-					onClick={() => toggleStatus(game, "WANT")}
-					size="icon-xs"
-					type="button"
-					variant="ghost"
-				>
-					<Heart
-						className={
-							trackedStatus === "WANT"
-								? "h-4 w-4 fill-rose-500 text-rose-500"
-								: "h-4 w-4"
-						}
-					/>
-				</Button>
+				<WishlistButton
+					isPending={isPending}
+					onToggle={() => toggleStatus(game, GAME_STATUSES_ENUM.WISHLIST)}
+					trackedStatus={trackedStatus}
+					variant="compact"
+				/>
 				<StatusSelect
 					disabled={isPending}
 					onChange={(status) => toggleStatus(game, status)}

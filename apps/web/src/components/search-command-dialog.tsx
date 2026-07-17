@@ -13,7 +13,11 @@ import { useDebounceCallback } from "usehooks-ts";
 import { useShallow } from "zustand/react/shallow";
 
 import { SearchResultRow } from "@/components/search-result-row";
-import { GAME_STATUSES, type GameStatus } from "@/constants/game-status";
+import {
+	GAME_STATUSES,
+	GAME_STATUSES_ENUM,
+	type GameStatus,
+} from "@/constants/game-status";
 import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
 import { useSearchStore } from "@/stores/search-store";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
@@ -139,7 +143,7 @@ export function SearchCommandDialog() {
 					) {
 						e.preventDefault();
 						e.stopPropagation();
-						toggleStatus(highlightedGame, "WANT");
+						toggleStatus(highlightedGame, GAME_STATUSES_ENUM.WISHLIST);
 						return;
 					}
 
