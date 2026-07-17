@@ -34,6 +34,51 @@ export interface ReleaseGame {
 	updatedAt?: number;
 }
 
+function FavoriteButton({
+	isPending,
+	onToggle,
+	readOnly,
+	trackedStatus,
+}: {
+	isPending: boolean;
+	onToggle: () => void;
+	readOnly: boolean;
+	trackedStatus: GameStatus | null;
+}) {
+	const isWant = trackedStatus === "WANT";
+
+	if (readOnly) {
+		return (
+			<Heart
+				className={
+					isWant
+						? "h-4 w-4 fill-rose-500 text-rose-500"
+						: "h-4 w-4 text-muted-foreground"
+				}
+			/>
+		);
+	}
+
+	return (
+		<Button
+			aria-label={isWant ? "Remove from want to play" : "Want to play"}
+			aria-pressed={isWant}
+			disabled={isPending}
+			onClick={(e) => {
+				e.preventDefault();
+				onToggle();
+			}}
+			size="icon-xs"
+			type="button"
+			variant="ghost"
+		>
+			<Heart
+				className={isWant ? "h-4 w-4 fill-rose-500 text-rose-500" : "h-4 w-4"}
+			/>
+		</Button>
+	);
+}
+
 function GameCover({
 	className,
 	game,
@@ -78,25 +123,43 @@ function GameCover({
 function GameCardGridBody({
 	game,
 	imagePriority,
+	isFavoritePending,
+	onToggleFavorite,
+	readOnly,
+	trackedStatus,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
+	isFavoritePending: boolean;
+	onToggleFavorite: () => void;
+	readOnly: boolean;
+	trackedStatus: GameStatus | null;
 }) {
 	return (
 		<>
-			<GameCover
-				className="aspect-3/4 w-full"
-				game={game}
-				imagePriority={imagePriority}
-			/>
+			<Link className="block" to={`/games/${game.igdbId}`}>
+				<GameCover
+					className="aspect-3/4 w-full"
+					game={game}
+					imagePriority={imagePriority}
+				/>
+			</Link>
 			{/* Truncated to 1 line (not 2) so every grid card measures the same
 			height regardless of title length — VirtuosoGrid assumes uniform
 			item size and jitters otherwise. */}
 			<p className="mt-1 truncate text-sm">{game.title}</p>
-			{/* Always mounted (just hidden) so every grid card measures the same
-			height — VirtuosoGrid assumes uniform item size and jitters otherwise. */}
-			<div className={`mt-1 ${game.igdbScore === null ? "invisible" : ""}`}>
-				<StarRating score={game.igdbScore ?? 0} />
+			<div className="mt-1 flex items-center justify-between gap-1">
+				{/* Always mounted (just hidden) so every grid card measures the same
+				height — VirtuosoGrid assumes uniform item size and jitters otherwise. */}
+				<div className={game.igdbScore === null ? "invisible" : ""}>
+					<StarRating score={game.igdbScore ?? 0} />
+				</div>
+				<FavoriteButton
+					isPending={isFavoritePending}
+					onToggle={onToggleFavorite}
+					readOnly={readOnly}
+					trackedStatus={trackedStatus}
+				/>
 			</div>
 		</>
 	);
@@ -105,24 +168,38 @@ function GameCardGridBody({
 function GameCardListBody({
 	game,
 	imagePriority,
+	isFavoritePending,
+	onToggleFavorite,
+	readOnly,
+	trackedStatus,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
+	isFavoritePending: boolean;
+	onToggleFavorite: () => void;
+	readOnly: boolean;
+	trackedStatus: GameStatus | null;
 }) {
 	return (
 		<>
-			<GameCover
-				className="aspect-3/4 h-16 w-12 shrink-0"
-				game={game}
-				imagePriority={imagePriority}
-			/>
+			<Link className="shrink-0" to={`/games/${game.igdbId}`}>
+				<GameCover
+					className="aspect-3/4 h-16 w-12"
+					game={game}
+					imagePriority={imagePriority}
+				/>
+			</Link>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm">{game.title}</p>
-				{game.igdbScore !== null && (
-					<div className="mt-0.5">
-						<StarRating score={game.igdbScore} />
-					</div>
-				)}
+				<div className="mt-0.5 flex items-center gap-1">
+					{game.igdbScore !== null && <StarRating score={game.igdbScore} />}
+					<FavoriteButton
+						isPending={isFavoritePending}
+						onToggle={onToggleFavorite}
+						readOnly={readOnly}
+						trackedStatus={trackedStatus}
+					/>
+				</div>
 			</div>
 		</>
 	);
@@ -224,26 +301,48 @@ export function GameCard({
 		onError: () => setTrackedStatus(game.igdbId, game.trackedStatus),
 	});
 
+	const isFavoritePending = addMutation.isPending || removeMutation.isPending;
+	const handleToggleFavorite = () => {
+		if (trackedStatus === "WANT") {
+			removeMutation.mutate();
+		} else {
+			addMutation.mutate("WANT");
+		}
+	};
+
 	return (
 		<HoverCard onOpenChange={setIsHoverCardOpen}>
 			<HoverCardTrigger
 				closeDelay={150}
 				delay={300}
 				render={
-					<Link
+					<div
 						className={
 							isList
 								? "group flex items-center gap-3 border-b py-2 last:border-b-0"
 								: "group block"
 						}
-						to={`/games/${game.igdbId}`}
 					/>
 				}
 			>
 				{isList ? (
-					<GameCardListBody game={game} imagePriority={imagePriority} />
+					<GameCardListBody
+						game={game}
+						imagePriority={imagePriority}
+						isFavoritePending={isFavoritePending}
+						onToggleFavorite={handleToggleFavorite}
+						readOnly={readOnly}
+						trackedStatus={trackedStatus}
+					/>
 				) : (
-					<GameCardGridBody game={game} imagePriority={imagePriority} />
+					<GameCardGridBody
+						game={game}
+						imagePriority={imagePriority}
+						isFavoritePending={isFavoritePending}
+						onToggleFavorite={handleToggleFavorite}
+						readOnly={readOnly}
+						trackedStatus={trackedStatus}
+					/>
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
@@ -252,44 +351,12 @@ export function GameCard({
 				{/* Scores + actions */}
 				<div className="p-3">
 					<div className="mb-3 flex items-center gap-2 text-sm">
-						{readOnly ? (
-							<Heart
-								className={
-									trackedStatus === "WANT"
-										? "h-4 w-4 fill-rose-500 text-rose-500"
-										: "h-4 w-4 text-muted-foreground"
-								}
-							/>
-						) : (
-							<Button
-								aria-label={
-									trackedStatus === "WANT"
-										? "Remove from want to play"
-										: "Want to play"
-								}
-								aria-pressed={trackedStatus === "WANT"}
-								disabled={addMutation.isPending || removeMutation.isPending}
-								onClick={(e) => {
-									e.preventDefault();
-									if (trackedStatus === "WANT") {
-										removeMutation.mutate();
-									} else {
-										addMutation.mutate("WANT");
-									}
-								}}
-								size="icon-xs"
-								type="button"
-								variant="ghost"
-							>
-								<Heart
-									className={
-										trackedStatus === "WANT"
-											? "h-4 w-4 fill-rose-500 text-rose-500"
-											: "h-4 w-4"
-									}
-								/>
-							</Button>
-						)}
+						<FavoriteButton
+							isPending={isFavoritePending}
+							onToggle={handleToggleFavorite}
+							readOnly={readOnly}
+							trackedStatus={trackedStatus}
+						/>
 
 						{game.igdbScore === null ? (
 							<span className="text-muted-foreground text-xs">
