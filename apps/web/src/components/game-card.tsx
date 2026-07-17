@@ -6,6 +6,7 @@ import {
 } from "@GameXL/ui/components/hover-card";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Gamepad2, Trash2, Video, VideoOff } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -76,17 +77,11 @@ function GameCover({
 function GameCardGridBody({
 	game,
 	imagePriority,
-	isQuickAddPending,
-	onQuickAddStatus,
-	readOnly,
-	trackedStatus,
+	statusSlot,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	isQuickAddPending: boolean;
-	onQuickAddStatus: (status: GameStatus) => void;
-	readOnly: boolean;
-	trackedStatus: GameStatus | null;
+	statusSlot: ReactNode;
 }) {
 	return (
 		<div className="overflow-hidden rounded-sm border border-border">
@@ -103,13 +98,10 @@ function GameCardGridBody({
 				item size and jitters otherwise. */}
 				<p className="truncate text-sm">{game.title}</p>
 				<div className="mt-1">
-					<GameStatusPill
-						isQuickAddPending={isQuickAddPending}
-						onQuickAddStatus={onQuickAddStatus}
-						readOnly={readOnly}
-						score={game.igdbScore}
-						trackedStatus={trackedStatus}
-					/>
+					<GameStatusPill>
+						<GameStatusPill.Rating score={game.igdbScore} />
+						{statusSlot}
+					</GameStatusPill>
 				</div>
 			</div>
 		</div>
@@ -119,17 +111,11 @@ function GameCardGridBody({
 function GameCardListBody({
 	game,
 	imagePriority,
-	isQuickAddPending,
-	onQuickAddStatus,
-	readOnly,
-	trackedStatus,
+	statusSlot,
 }: {
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
-	isQuickAddPending: boolean;
-	onQuickAddStatus: (status: GameStatus) => void;
-	readOnly: boolean;
-	trackedStatus: GameStatus | null;
+	statusSlot: ReactNode;
 }) {
 	return (
 		<>
@@ -143,13 +129,10 @@ function GameCardListBody({
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm">{game.title}</p>
 				<div className="mt-0.5">
-					<GameStatusPill
-						isQuickAddPending={isQuickAddPending}
-						onQuickAddStatus={onQuickAddStatus}
-						readOnly={readOnly}
-						score={game.igdbScore}
-						trackedStatus={trackedStatus}
-					/>
+					<GameStatusPill>
+						<GameStatusPill.Rating score={game.igdbScore} />
+						{statusSlot}
+					</GameStatusPill>
 				</div>
 			</div>
 		</>
@@ -263,6 +246,23 @@ export function GameCard({
 	const handleQuickAddStatus = (status: GameStatus) =>
 		addMutation.mutate(status);
 
+	const statusSlot = trackedStatus ? (
+		<>
+			<GameStatusPill.Divider />
+			<GameStatusPill.StatusIcon status={trackedStatus} />
+		</>
+	) : (
+		!readOnly && (
+			<>
+				<GameStatusPill.Divider />
+				<GameStatusPill.QuickAdd
+					isPending={addMutation.isPending}
+					onSelectStatus={handleQuickAddStatus}
+				/>
+			</>
+		)
+	);
+
 	return (
 		<HoverCard onOpenChange={setIsHoverCardOpen}>
 			<HoverCardTrigger
@@ -282,19 +282,13 @@ export function GameCard({
 					<GameCardListBody
 						game={game}
 						imagePriority={imagePriority}
-						isQuickAddPending={addMutation.isPending}
-						onQuickAddStatus={handleQuickAddStatus}
-						readOnly={readOnly}
-						trackedStatus={trackedStatus}
+						statusSlot={statusSlot}
 					/>
 				) : (
 					<GameCardGridBody
 						game={game}
 						imagePriority={imagePriority}
-						isQuickAddPending={addMutation.isPending}
-						onQuickAddStatus={handleQuickAddStatus}
-						readOnly={readOnly}
-						trackedStatus={trackedStatus}
+						statusSlot={statusSlot}
 					/>
 				)}
 			</HoverCardTrigger>

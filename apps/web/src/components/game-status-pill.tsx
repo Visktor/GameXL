@@ -1,7 +1,22 @@
+import type { ComponentProps, ReactNode } from "react";
 import { StarRating } from "@/components/star-rating";
 import { StatusQuickAdd } from "@/components/status-quick-add";
 import type { GameStatus } from "@/constants/game-status";
 import { ENGAGED_STATUSES, GAME_STATUS_META } from "@/constants/game-status";
+
+function Rating({ score }: { score: number | null }) {
+	return (
+		<div
+			className={`flex items-center pr-2 ${score === null ? "opacity-40" : ""}`}
+		>
+			<StarRating score={score ?? 0} />
+		</div>
+	);
+}
+
+function Divider() {
+	return <div className="w-px bg-border" />;
+}
 
 function StatusIcon({ status }: { status: GameStatus }) {
 	const { icon: Icon, label } = GAME_STATUS_META[status];
@@ -19,55 +34,26 @@ function StatusIcon({ status }: { status: GameStatus }) {
 	);
 }
 
-interface GameStatusPillProps {
-	isQuickAddPending?: boolean;
-	onQuickAddStatus?: (status: GameStatus) => void;
-	/** Viewing someone else's list: no quick-add action for untracked games. */
-	readOnly?: boolean;
-	score: number | null;
-	trackedStatus: GameStatus | null;
+function QuickAdd(props: ComponentProps<typeof StatusQuickAdd>) {
+	return (
+		<div className="flex items-center pl-2">
+			<StatusQuickAdd {...props} />
+		</div>
+	);
 }
 
 /**
  * Rating + status, laid out as an internal divider rather than its own
  * bordered pill — the outline lives on the card (see GameCard) so this
  * reads as a division inside a boxed card, not a floating isolated badge.
- * The right slot shows the Wishlist quick-add button only while the game
- * is untracked — once it has any status (including WISHLIST) that slot
- * becomes a read-only status icon with a tooltip.
+ * Purely layout: compose with GameStatusPill.Rating / .Divider / .StatusIcon
+ * / .QuickAdd — the caller decides what (if anything) goes in the right slot.
  */
-export function GameStatusPill({
-	isQuickAddPending,
-	onQuickAddStatus,
-	readOnly = false,
-	score,
-	trackedStatus,
-}: GameStatusPillProps) {
-	const showQuickAdd = !(trackedStatus || readOnly);
-	const showRightSlot = Boolean(trackedStatus) || showQuickAdd;
-
-	return (
-		<div className="flex items-stretch">
-			<div
-				className={`flex items-center pr-2 ${score === null ? "opacity-40" : ""}`}
-			>
-				<StarRating score={score ?? 0} />
-			</div>
-			{showRightSlot && (
-				<>
-					<div className="w-px bg-border" />
-					{trackedStatus ? (
-						<StatusIcon status={trackedStatus} />
-					) : (
-						<div className="flex items-center pl-2">
-							<StatusQuickAdd
-								isPending={isQuickAddPending}
-								onSelectStatus={(status) => onQuickAddStatus?.(status)}
-							/>
-						</div>
-					)}
-				</>
-			)}
-		</div>
-	);
+export function GameStatusPill({ children }: { children: ReactNode }) {
+	return <div className="flex items-stretch">{children}</div>;
 }
+
+GameStatusPill.Rating = Rating;
+GameStatusPill.Divider = Divider;
+GameStatusPill.StatusIcon = StatusIcon;
+GameStatusPill.QuickAdd = QuickAdd;
