@@ -4,6 +4,7 @@ import {
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
+import { cn } from "@GameXL/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Gamepad2, Trash2, Video, VideoOff } from "lucide-react";
 import type { ReactNode } from "react";
@@ -48,7 +49,7 @@ function GameCover({
 	const TrailerIcon = hasTrailer ? Video : VideoOff;
 
 	return (
-		<div className={`relative overflow-hidden bg-muted ${className}`}>
+		<div className={cn("relative overflow-hidden bg-muted", className)}>
 			{game.coverUrl ? (
 				<img
 					alt={game.title}

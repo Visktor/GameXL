@@ -1,3 +1,4 @@
+import { cn } from "@GameXL/ui/lib/utils";
 import type { ComponentProps, ReactNode } from "react";
 import { StarRating } from "@/components/star-rating";
 import { StatusQuickAdd } from "@/components/status-quick-add";
@@ -7,7 +8,7 @@ import { ENGAGED_STATUSES, GAME_STATUS_META } from "@/constants/game-status";
 function Rating({ score }: { score: number | null }) {
 	return (
 		<div
-			className={`flex items-center pr-2 ${score === null ? "opacity-40" : ""}`}
+			className={cn("flex items-center pr-2", score === null && "opacity-40")}
 		>
 			<StarRating score={score ?? 0} />
 		</div>
@@ -22,11 +23,12 @@ function StatusIcon({ status }: { status: GameStatus }) {
 	const { icon: Icon, label } = GAME_STATUS_META[status];
 	return (
 		<span
-			className={`flex items-center pl-2 ${
+			className={cn(
+				"flex items-center pl-2",
 				ENGAGED_STATUSES.has(status)
 					? "text-violet-500"
 					: "text-muted-foreground"
-			}`}
+			)}
 			title={label}
 		>
 			<Icon className="h-3.5 w-3.5" />
