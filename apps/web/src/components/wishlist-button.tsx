@@ -1,4 +1,5 @@
 import { Button } from "@GameXL/ui/components/button";
+import { cn } from "@GameXL/ui/lib/utils";
 import type { GameStatus } from "@/constants/game-status";
 import { GAME_STATUS_META, GAME_STATUSES_ENUM } from "@/constants/game-status";
 
@@ -23,9 +24,10 @@ export function WishlistButton({
 	const isCompact = variant === "compact";
 	const GiftIcon = GAME_STATUS_META.WISHLIST.icon;
 
-	const iconClassName = `h-4 w-4 ${
+	const iconClassName = cn(
+		"h-4 w-4",
 		isWishlisted ? "text-violet-500" : "text-muted-foreground"
-	}`;
+	);
 
 	if (readOnly) {
 		return (
