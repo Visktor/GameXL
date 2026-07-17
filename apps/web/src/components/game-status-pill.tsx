@@ -1,3 +1,4 @@
+import { Separator } from "@GameXL/ui/components/separator";
 import { cn } from "@GameXL/ui/lib/utils";
 import type { ComponentProps, ReactNode } from "react";
 import { StarRating } from "@/components/star-rating";
@@ -16,7 +17,7 @@ function Rating({ score }: { score: number | null }) {
 }
 
 function Divider() {
-	return <div className="w-px bg-border" />;
+	return <Separator orientation="vertical" />;
 }
 
 function StatusIcon({ status }: { status: GameStatus }) {
