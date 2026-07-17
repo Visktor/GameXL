@@ -10,8 +10,9 @@ import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
 import { StatusButtonGroup } from "@/components/status-select";
+import { WishlistButton } from "@/components/wishlist-button";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
-import type { GameStatus } from "@/constants/game-status";
+import { GAME_STATUSES, type GameStatus } from "@/constants/game-status";
 import {
 	IGDB_COVER_HEIGHT,
 	IGDB_COVER_WIDTH,
@@ -23,6 +24,8 @@ import { NotFoundError } from "@/utils/errors";
 import type { LightboxImage, LightboxTarget } from "@/utils/lightbox";
 import { LightboxUtils } from "@/utils/lightbox";
 import { trpcClient } from "@/utils/trpc";
+
+const TRACK_STATUSES = GAME_STATUSES.filter((status) => status !== "WISHLIST");
 
 export default function GameDetails() {
 	const { igdbId } = useParams<{ igdbId: string }>();
@@ -74,6 +77,15 @@ export default function GameDetails() {
 		onError: () =>
 			igdbId && setTrackedStatus(igdbId, data?.trackedStatus ?? null),
 	});
+
+	const isWishlistPending = addMutation.isPending || removeMutation.isPending;
+	const handleToggleWishlist = () => {
+		if (trackedStatus === "WISHLIST") {
+			removeMutation.mutate();
+		} else {
+			addMutation.mutate("WISHLIST");
+		}
+	};
 
 	if (!igdbId) {
 		throw new NotFoundError("Missing igdbId route param");
@@ -197,10 +209,17 @@ export default function GameDetails() {
 							<p className="text-sm leading-relaxed">{data.summary}</p>
 						)}
 
-						<div className="mt-auto flex items-center gap-1.5">
+						<div className="mt-auto flex flex-wrap items-center gap-1.5">
+							<WishlistButton
+								isPending={isWishlistPending}
+								onToggle={handleToggleWishlist}
+								trackedStatus={trackedStatus ?? null}
+								variant="full"
+							/>
 							<StatusButtonGroup
 								disabled={addMutation.isPending}
 								onChange={(trackStatus) => addMutation.mutate(trackStatus)}
+								statuses={TRACK_STATUSES}
 								value={trackedStatus ?? null}
 							/>
 							{trackedStatus && (

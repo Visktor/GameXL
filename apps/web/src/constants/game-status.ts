@@ -2,13 +2,13 @@ import {
 	Ban,
 	CheckCircle2,
 	Gamepad2,
-	Heart,
+	Gift,
 	type LucideIcon,
 	PauseCircle,
 } from "lucide-react";
 
 export const GAME_STATUSES = [
-	"WANT",
+	"WISHLIST",
 	"PLAYING",
 	"COMPLETED",
 	"ON_HOLD",
@@ -25,5 +25,5 @@ export const GAME_STATUS_META: Record<
 	COMPLETED: { label: "Completed", icon: CheckCircle2 },
 	ON_HOLD: { label: "On Hold", icon: PauseCircle },
 	DROPPED: { label: "Dropped", icon: Ban },
-	WANT: { label: "Want to Play", icon: Heart },
+	WISHLIST: { label: "Wishlist", icon: Gift },
 };

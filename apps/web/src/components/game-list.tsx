@@ -68,7 +68,7 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 			COMPLETED: 0,
 			ON_HOLD: 0,
 			DROPPED: 0,
-			WANT: 0,
+			WISHLIST: 0,
 		};
 		for (const game of games) {
 			if (game.trackedStatus) {

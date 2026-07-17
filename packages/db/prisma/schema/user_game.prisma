@@ -2,7 +2,7 @@ enum GameStatus {
   PLAYING
   COMPLETED
   DROPPED
-  WANT
+  WISHLIST
   ON_HOLD
 }
 
