@@ -8,11 +8,11 @@ import {
 } from "lucide-react";
 
 export const GAME_STATUSES = [
+	"WANT",
 	"PLAYING",
 	"COMPLETED",
 	"ON_HOLD",
 	"DROPPED",
-	"WANT",
 ] as const;
 
 export type GameStatus = (typeof GAME_STATUSES)[number];

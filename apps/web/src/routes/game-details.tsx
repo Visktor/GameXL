@@ -9,7 +9,7 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
-import { StatusSelect } from "@/components/status-select";
+import { StatusButtonGroup } from "@/components/status-select";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
 import type { GameStatus } from "@/constants/game-status";
 import {
@@ -198,7 +198,7 @@ export default function GameDetails() {
 						)}
 
 						<div className="mt-auto flex items-center gap-1.5">
-							<StatusSelect
+							<StatusButtonGroup
 								disabled={addMutation.isPending}
 								onChange={(trackStatus) => addMutation.mutate(trackStatus)}
 								value={trackedStatus ?? null}
