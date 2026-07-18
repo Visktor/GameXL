@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mockTrpcProcedure } from "./support/trpc-route";
 
 const HOLLOW_KNIGHT_NAME = /Hollow Knight/i;
-const SEARCH_RESULTS_URL = /\/search\?q=/;
+const GAME_DETAILS_URL = /\/games\/1$/;
 
 const HOLLOW_KNIGHT = {
 	igdbId: "1",
@@ -14,7 +14,18 @@ const HOLLOW_KNIGHT = {
 	trackedStatus: null,
 };
 
-test("search for a game and track it as Playing", async ({ page }) => {
+const HOLLOW_KNIGHT_DETAILS = {
+	...HOLLOW_KNIGHT,
+	developer: "Team Cherry",
+	genres: [],
+	platforms: [],
+	summary: null,
+	screenshots: [],
+};
+
+test("search for a game, open its details page, and track it as Playing", async ({
+	page,
+}) => {
 	await page.route("**/api/auth/get-session**", (route) =>
 		route.fulfill({
 			status: 200,
@@ -30,6 +41,7 @@ test("search for a game and track it as Playing", async ({ page }) => {
 		games: [HOLLOW_KNIGHT],
 		nextOffset: null,
 	}));
+	await mockTrpcProcedure(page, "game.getById", () => HOLLOW_KNIGHT_DETAILS);
 
 	let trackedInput: unknown;
 	await mockTrpcProcedure(page, "userGame.add", (input) => {
@@ -39,22 +51,28 @@ test("search for a game and track it as Playing", async ({ page }) => {
 
 	await page.goto("/");
 
-	await page.getByRole("button", { name: "Search games" }).click();
+	// Wait for the app to finish mounting before pressing the shortcut — the
+	// Cmd+K listener is attached in a useEffect, so a keypress fired before
+	// hydration completes is missed with no visible symptom.
+	await expect(
+		page.getByRole("button", { name: "Toggle theme" })
+	).toBeVisible();
+	await page.keyboard.press("Control+k");
 	await page.getByPlaceholder("Search games...").fill("hollow");
 	await page
 		.getByRole("option", { name: HOLLOW_KNIGHT_NAME })
 		.click({ timeout: 10_000 });
 
-	await expect(page).toHaveURL(SEARCH_RESULTS_URL);
-	const gameLink = page.getByRole("link", { name: HOLLOW_KNIGHT_NAME });
-	await expect(gameLink).toBeVisible();
+	// Selecting a search result navigates straight to its details page
+	// (see 5d477b1 "fix: navigate to game details on search result select").
+	await expect(page).toHaveURL(GAME_DETAILS_URL);
+	await expect(
+		page.getByRole("heading", { name: "Hollow Knight" })
+	).toBeVisible();
 
-	await gameLink.hover();
 	const playingButton = page.getByRole("button", { name: "Playing" });
 	await playingButton.click();
 
-	await expect(playingButton).toBeDisabled();
-	await expect(page.getByRole("button").nth(2)).toBeVisible();
 	await expect
 		.poll(() => trackedInput)
 		.toMatchObject({

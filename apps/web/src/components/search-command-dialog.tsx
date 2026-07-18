@@ -18,7 +18,10 @@ import {
 	GAME_STATUSES_ENUM,
 	type GameStatus,
 } from "@/constants/game-status";
-import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
+import {
+	resolveTrackedStatus,
+	useTrackGameMutation,
+} from "@/hooks/use-track-game-mutation";
 import { useSearchStore } from "@/stores/search-store";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
@@ -156,10 +159,10 @@ export function SearchCommandDialog() {
 					) {
 						e.preventDefault();
 						e.stopPropagation();
-						const currentStatus =
-							useTrackedGamesStore.getState().statusByGameId[
-								highlightedGame.igdbId
-							] ?? highlightedGame.trackedStatus;
+						const currentStatus = resolveTrackedStatus(
+							highlightedGame,
+							useTrackedGamesStore.getState().statusByGameId
+						);
 						const direction = e.key === "ArrowRight" ? 1 : -1;
 						const nextIndex =
 							(STATUS_CYCLE.indexOf(currentStatus) +

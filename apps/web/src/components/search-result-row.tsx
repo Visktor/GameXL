@@ -3,7 +3,10 @@ import { StarRating } from "@/components/star-rating";
 import { StatusSelect } from "@/components/status-select";
 import { WishlistButton } from "@/components/wishlist-button";
 import { GAME_STATUSES_ENUM } from "@/constants/game-status";
-import { useTrackGameMutation } from "@/hooks/use-track-game-mutation";
+import {
+	resolveTrackedStatus,
+	useTrackGameMutation,
+} from "@/hooks/use-track-game-mutation";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 
 const RATING_SCALE = 20;
@@ -13,10 +16,9 @@ export function SearchResultRow({ game }: { game: ReleaseGame }) {
 		? new Date(game.releaseDate * 1000).getFullYear()
 		: null;
 
-	const storedStatus = useTrackedGamesStore(
-		(state) => state.statusByGameId[game.igdbId]
+	const trackedStatus = useTrackedGamesStore((state) =>
+		resolveTrackedStatus(game, state.statusByGameId)
 	);
-	const trackedStatus = storedStatus ?? game.trackedStatus;
 	const { addMutation, removeMutation, toggleStatus } = useTrackGameMutation();
 	const isPending = addMutation.isPending || removeMutation.isPending;
 

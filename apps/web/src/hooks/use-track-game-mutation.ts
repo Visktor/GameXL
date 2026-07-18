@@ -18,6 +18,23 @@ interface MutationContext {
 	previousStatus: GameStatus | null;
 }
 
+/**
+ * Resolves a game's effective status from the optimistic-override store,
+ * falling back to the server-provided status only when the store has no
+ * entry at all. A plain `storedStatus ?? game.trackedStatus` is wrong here:
+ * once a game is removed, the store holds an explicit `null`, and `??`
+ * can't tell that apart from "never overridden" — it would fall back to
+ * the stale server-provided status and make the removal look like a no-op.
+ */
+export function resolveTrackedStatus(
+	game: ReleaseGame,
+	statusByGameId: Record<string, GameStatus | null>
+): GameStatus | null {
+	return game.igdbId in statusByGameId
+		? statusByGameId[game.igdbId]
+		: game.trackedStatus;
+}
+
 export function useTrackGameMutation() {
 	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 
@@ -35,16 +52,17 @@ export function useTrackGameMutation() {
 				status,
 			}),
 		onMutate: ({ game, status }): MutationContext => {
-			const previousStatus =
-				useTrackedGamesStore.getState().statusByGameId[game.igdbId] ??
-				game.trackedStatus;
+			const previousStatus = resolveTrackedStatus(
+				game,
+				useTrackedGamesStore.getState().statusByGameId
+			);
 			setTrackedStatus(game.igdbId, status);
 			return { previousStatus };
 		},
 		onError: (_error, { game }, context) => {
 			setTrackedStatus(
 				game.igdbId,
-				context?.previousStatus ?? game.trackedStatus
+				context ? context.previousStatus : game.trackedStatus
 			);
 		},
 	});
@@ -53,16 +71,17 @@ export function useTrackGameMutation() {
 		mutationFn: ({ game }: RemoveVariables) =>
 			trpcClient.userGame.remove.mutate({ igdbId: game.igdbId }),
 		onMutate: ({ game }): MutationContext => {
-			const previousStatus =
-				useTrackedGamesStore.getState().statusByGameId[game.igdbId] ??
-				game.trackedStatus;
+			const previousStatus = resolveTrackedStatus(
+				game,
+				useTrackedGamesStore.getState().statusByGameId
+			);
 			setTrackedStatus(game.igdbId, null);
 			return { previousStatus };
 		},
 		onError: (_error, { game }, context) => {
 			setTrackedStatus(
 				game.igdbId,
-				context?.previousStatus ?? game.trackedStatus
+				context ? context.previousStatus : game.trackedStatus
 			);
 		},
 	});
@@ -94,9 +113,10 @@ export function useTrackGameMutation() {
 
 	/** Quick-add from search, but pressing the same status again removes the game instead of re-adding it. */
 	function toggleStatus(game: ReleaseGame, status: GameStatus) {
-		const currentStatus =
-			useTrackedGamesStore.getState().statusByGameId[game.igdbId] ??
-			game.trackedStatus;
+		const currentStatus = resolveTrackedStatus(
+			game,
+			useTrackedGamesStore.getState().statusByGameId
+		);
 		if (currentStatus === status) {
 			removeMutation.mutate({ game });
 		} else {
