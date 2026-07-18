@@ -16,6 +16,8 @@ import {
 	type GameStatus,
 	TRACK_STATUSES,
 } from "@/constants/game-status";
+import { useAutoplayPreferenceStore } from "@/stores/autoplay-preference-store";
+import { useGamePreviewPanelStore } from "@/stores/game-preview-panel-store";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 import { GameCardGridBody } from "./game-card-grid-body";
@@ -42,6 +44,19 @@ export function GameCard({
 }) {
 	const isList = layout === "list";
 	const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
+
+	const autoplayTrailers = useAutoplayPreferenceStore(
+		(state) => state.autoplayTrailers
+	);
+	const openPreviewPanel = useGamePreviewPanelStore((state) => state.open);
+
+	const handleCoverClick = (e: React.MouseEvent) => {
+		if (e.metaKey || e.ctrlKey || e.button === 1) {
+			return;
+		}
+		e.preventDefault();
+		openPreviewPanel(game.igdbId);
+	};
 
 	const storedStatus = useTrackedGamesStore(
 		(state) => state.statusByGameId[game.igdbId]
@@ -112,17 +127,27 @@ export function GameCard({
 				}
 			>
 				{isList ? (
-					<GameCardListBody game={game} imagePriority={imagePriority}>
+					<GameCardListBody
+						game={game}
+						imagePriority={imagePriority}
+						onCoverClick={handleCoverClick}
+					>
 						{statusRow}
 					</GameCardListBody>
 				) : (
-					<GameCardGridBody game={game} imagePriority={imagePriority}>
+					<GameCardGridBody
+						game={game}
+						imagePriority={imagePriority}
+						onCoverClick={handleCoverClick}
+					>
 						{statusRow}
 					</GameCardGridBody>
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
-				<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
+				{autoplayTrailers && (
+					<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
+				)}
 
 				{/* Scores + actions */}
 				<div className="p-3">

@@ -1,5 +1,4 @@
 import { Button } from "@GameXL/ui/components/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -12,22 +11,17 @@ import { StarRating } from "@/components/star-rating";
 import { StatusButtonGroup } from "@/components/status-button-group";
 import { WishlistButton } from "@/components/wishlist-button";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
-import {
-	GAME_STATUSES_ENUM,
-	type GameStatus,
-	TRACK_STATUSES,
-} from "@/constants/game-status";
+import { GAME_STATUSES_ENUM, TRACK_STATUSES } from "@/constants/game-status";
 import {
 	IGDB_COVER_HEIGHT,
 	IGDB_COVER_WIDTH,
 	IGDB_SCREENSHOT_BIG_TEMPLATE,
 	IGDB_SCREENSHOT_HUGE_TEMPLATE,
 } from "@/constants/igdb";
-import { useTrackedGamesStore } from "@/stores/tracked-games-store";
+import { useGameDetailQuery } from "@/hooks/use-game-detail-query";
 import { NotFoundError } from "@/utils/errors";
 import type { LightboxImage, LightboxTarget } from "@/utils/lightbox";
 import { LightboxUtils } from "@/utils/lightbox";
-import { trpcClient } from "@/utils/trpc";
 
 export default function GameDetails() {
 	const { igdbId } = useParams<{ igdbId: string }>();
@@ -35,50 +29,10 @@ export default function GameDetails() {
 		null
 	);
 
-	const { data, status, error } = useQuery({
-		queryKey: ["game", igdbId],
-		queryFn: () => trpcClient.game.getById.query({ igdbId: igdbId ?? "" }),
-		enabled: Boolean(igdbId),
-	});
+	const { data, status, error, trackedStatus, addMutation, removeMutation } =
+		useGameDetailQuery(igdbId);
 
 	const [trailerFailed, setTrailerFailed] = useState(false);
-
-	const trackedStatus = useTrackedGamesStore(
-		(state) =>
-			(igdbId ? state.statusByGameId[igdbId] : undefined) ?? data?.trackedStatus
-	);
-
-	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
-
-	const addMutation = useMutation({
-		mutationFn: (trackStatus: GameStatus) => {
-			if (!data) {
-				throw new Error("Cannot track a game before its details have loaded");
-			}
-			return trpcClient.userGame.add.mutate({
-				gameData: {
-					igdbId: data.igdbId,
-					title: data.title,
-					coverUrl: data.coverUrl,
-					trailerVideoId: data.trailerVideoId,
-					releaseDate: data.releaseDate,
-					igdbScore: data.igdbScore,
-				},
-				status: trackStatus,
-			});
-		},
-		onMutate: (trackStatus) => igdbId && setTrackedStatus(igdbId, trackStatus),
-		onError: () =>
-			igdbId && setTrackedStatus(igdbId, data?.trackedStatus ?? null),
-	});
-
-	const removeMutation = useMutation({
-		mutationFn: () =>
-			trpcClient.userGame.remove.mutate({ igdbId: igdbId ?? "" }),
-		onMutate: () => igdbId && setTrackedStatus(igdbId, null),
-		onError: () =>
-			igdbId && setTrackedStatus(igdbId, data?.trackedStatus ?? null),
-	});
 
 	const isWishlistPending = addMutation.isPending || removeMutation.isPending;
 	const handleToggleWishlist = () => {
