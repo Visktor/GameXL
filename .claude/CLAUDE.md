@@ -55,6 +55,11 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
   - Include keyboard event handlers alongside mouse events
   - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
 
+### Component File Structure
+
+- Don't put multiple components in a single file. The only exception: a very simple, purely presentational sub-component used exclusively by the component in that file, split out only for organization (e.g. a small icon-wrapper or row renderer with no meaningful logic of its own).
+- Everything else — composite/compound components, anything with more than one real part, anything reused elsewhere — gets its own folder (e.g. `game-status-pill/index.tsx` plus one file per sub-part) instead of being crammed into a single file.
+
 ### Styling (Tailwind)
 
 - Use `cn()` from `@GameXL/ui/lib/utils` (clsx + tailwind-merge) instead of hand-interpolating template-literal class strings whenever merging 2+ conditional classes or merging with a caller-supplied `className` prop — plain string interpolation doesn't dedupe conflicting Tailwind utilities (`twMerge` does), and `clsx` skips falsy branches cleanly. A single one-off ternary (e.g. `score === null ? "opacity-40" : ""`) is fine as-is.
