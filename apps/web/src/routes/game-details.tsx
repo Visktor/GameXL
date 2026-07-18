@@ -9,7 +9,7 @@ import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
 import { StarRating } from "@/components/star-rating";
-import { StatusButtonGroup } from "@/components/status-select";
+import { StatusButtonGroup } from "@/components/status-button-group";
 import { WishlistButton } from "@/components/wishlist-button";
 import { YouTubeTrailer } from "@/components/youtube-trailer";
 import {
