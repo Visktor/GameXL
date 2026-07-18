@@ -2,6 +2,7 @@ import { cn } from "@GameXL/ui/lib/utils";
 import { BookmarkIcon, HomeIcon, SearchIcon } from "lucide-react";
 import { NavLink } from "react-router";
 
+import { AutoplayToggle } from "./autoplay-toggle";
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
@@ -53,6 +54,7 @@ export default function Header() {
 			</nav>
 			<div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-popover p-1.5 shadow-lg">
 				<ModeToggle />
+				<AutoplayToggle />
 				<UserMenu />
 			</div>
 		</header>

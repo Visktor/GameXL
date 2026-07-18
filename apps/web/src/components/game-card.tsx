@@ -6,7 +6,7 @@ import {
 } from "@GameXL/ui/components/hover-card";
 import { cn } from "@GameXL/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Gamepad2, Trash2, Video, VideoOff } from "lucide-react";
+import { ExternalLink, Gamepad2, Trash2, Video, VideoOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -21,6 +21,8 @@ import {
 	type GameStatus,
 	TRACK_STATUSES,
 } from "@/constants/game-status";
+import { useAutoplayPreferenceStore } from "@/stores/autoplay-preference-store";
+import { useGamePreviewPanelStore } from "@/stores/game-preview-panel-store";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
 import { trpcClient } from "@/utils/trpc";
 
@@ -111,24 +113,53 @@ function GameCardStatusRow({
 	);
 }
 
+function ExpandToFullPageLink({
+	className,
+	game,
+}: {
+	className: string;
+	game: ReleaseGame;
+}) {
+	return (
+		<Link
+			aria-label={`Open ${game.title}'s full page`}
+			className={cn(
+				"z-10 rounded-full bg-background/70 p-1 text-foreground opacity-0 transition-opacity hover:bg-background group-hover:opacity-100",
+				className
+			)}
+			onClick={(e) => e.stopPropagation()}
+			to={`/games/${game.igdbId}`}
+		>
+			<ExternalLink className="h-3.5 w-3.5" />
+		</Link>
+	);
+}
+
 function GameCardGridBody({
 	children,
 	game,
 	imagePriority,
+	onCoverClick,
 }: {
 	children: ReactNode;
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
+	onCoverClick: (e: React.MouseEvent) => void;
 }) {
 	return (
-		<div className="overflow-hidden rounded-sm border border-border">
-			<Link className="block" to={`/games/${game.igdbId}`}>
+		<div className="relative overflow-hidden rounded-sm border border-border">
+			<Link
+				className="block"
+				onClick={onCoverClick}
+				to={`/games/${game.igdbId}`}
+			>
 				<GameCover
 					className="aspect-3/4 w-full"
 					game={game}
 					imagePriority={imagePriority}
 				/>
 			</Link>
+			<ExpandToFullPageLink className="absolute top-1 right-1" game={game} />
 			<div className="p-2">
 				{/* Truncated to 1 line (not 2) so every grid card measures the same
 				height regardless of title length — VirtuosoGrid assumes uniform
@@ -144,14 +175,20 @@ function GameCardListBody({
 	children,
 	game,
 	imagePriority,
+	onCoverClick,
 }: {
 	children: ReactNode;
 	game: ReleaseGame;
 	imagePriority: "auto" | "high" | "low";
+	onCoverClick: (e: React.MouseEvent) => void;
 }) {
 	return (
 		<>
-			<Link className="shrink-0" to={`/games/${game.igdbId}`}>
+			<Link
+				className="shrink-0"
+				onClick={onCoverClick}
+				to={`/games/${game.igdbId}`}
+			>
 				<GameCover
 					className="aspect-3/4 h-16 w-12 rounded-sm"
 					game={game}
@@ -162,6 +199,7 @@ function GameCardListBody({
 				<p className="truncate text-sm">{game.title}</p>
 				<div className="mt-0.5">{children}</div>
 			</div>
+			<ExpandToFullPageLink className="shrink-0" game={game} />
 		</>
 	);
 }
@@ -229,6 +267,19 @@ export function GameCard({
 }) {
 	const isList = layout === "list";
 	const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
+
+	const autoplayTrailers = useAutoplayPreferenceStore(
+		(state) => state.autoplayTrailers
+	);
+	const openPreviewPanel = useGamePreviewPanelStore((state) => state.open);
+
+	const handleCoverClick = (e: React.MouseEvent) => {
+		if (e.metaKey || e.ctrlKey || e.button === 1) {
+			return;
+		}
+		e.preventDefault();
+		openPreviewPanel(game.igdbId);
+	};
 
 	const storedStatus = useTrackedGamesStore(
 		(state) => state.statusByGameId[game.igdbId]
@@ -299,17 +350,27 @@ export function GameCard({
 				}
 			>
 				{isList ? (
-					<GameCardListBody game={game} imagePriority={imagePriority}>
+					<GameCardListBody
+						game={game}
+						imagePriority={imagePriority}
+						onCoverClick={handleCoverClick}
+					>
 						{statusRow}
 					</GameCardListBody>
 				) : (
-					<GameCardGridBody game={game} imagePriority={imagePriority}>
+					<GameCardGridBody
+						game={game}
+						imagePriority={imagePriority}
+						onCoverClick={handleCoverClick}
+					>
 						{statusRow}
 					</GameCardGridBody>
 				)}
 			</HoverCardTrigger>
 			<HoverCardContent className="w-140 p-0" side="right">
-				<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
+				{autoplayTrailers && (
+					<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
+				)}
 
 				{/* Scores + actions */}
 				<div className="p-3">

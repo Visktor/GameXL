@@ -6,6 +6,7 @@ import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 
 import "./index.css";
 import ErrorPage from "./components/error-page";
+import { GamePreviewPanel } from "./components/game-preview-panel";
 import Header from "./components/header";
 import { SearchCommandDialog } from "./components/search-command-dialog";
 import { ThemeProvider } from "./components/theme-provider";
@@ -35,7 +36,12 @@ function RootLayout() {
 			>
 				<div className="grid h-svh grid-rows-[auto_1fr]">
 					<Header />
-					<Outlet />
+					<div className="flex overflow-hidden">
+						<div className="min-w-0 flex-1 overflow-hidden">
+							<Outlet />
+						</div>
+						<GamePreviewPanel />
+					</div>
 				</div>
 				<SearchCommandDialog />
 				<Toaster richColors />
