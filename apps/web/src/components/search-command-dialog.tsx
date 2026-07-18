@@ -93,15 +93,13 @@ export function SearchCommandDialog() {
 		[data]
 	);
 
-	useEffect(() => {
-		if (games.length === 0) {
-			setHighlightedGameId("");
-			return;
-		}
-		if (!games.some((game) => game.igdbId === highlightedGameId)) {
-			setHighlightedGameId(games[0].igdbId);
-		}
-	}, [games, highlightedGameId]);
+	const highlightedGame = useMemo(
+		() =>
+			games.find((game) => game.igdbId === highlightedGameId) ??
+			games[0] ??
+			null,
+		[games, highlightedGameId]
+	);
 
 	function goToResults(q: string) {
 		if (!q.trim()) {
@@ -129,13 +127,10 @@ export function SearchCommandDialog() {
 			onValueChange={setHighlightedGameId}
 			open={open}
 			shouldFilter={false}
-			value={highlightedGameId}
+			value={highlightedGame?.igdbId ?? ""}
 		>
 			<CommandInput
 				onKeyDown={(e) => {
-					const highlightedGame = games.find(
-						(game) => game.igdbId === highlightedGameId
-					);
 					const isMutating = addMutation.isPending || removeMutation.isPending;
 
 					if (
