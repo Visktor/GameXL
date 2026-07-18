@@ -17,7 +17,11 @@ export function GameCardListBody({
 }) {
 	return (
 		<>
-			<Link className="shrink-0" onClick={onCoverClick} to={`/games/${game.igdbId}`}>
+			<Link
+				className="shrink-0"
+				onClick={onCoverClick}
+				to={`/games/${game.igdbId}`}
+			>
 				<GameCover
 					className="aspect-3/4 h-16 w-12 rounded-sm"
 					game={game}

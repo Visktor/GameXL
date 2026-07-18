@@ -17,7 +17,11 @@ export function GameCardGridBody({
 }) {
 	return (
 		<div className="relative overflow-hidden rounded-sm border border-border">
-			<Link className="block" onClick={onCoverClick} to={`/games/${game.igdbId}`}>
+			<Link
+				className="block"
+				onClick={onCoverClick}
+				to={`/games/${game.igdbId}`}
+			>
 				<GameCover
 					className="aspect-3/4 w-full"
 					game={game}
