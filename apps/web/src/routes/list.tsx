@@ -26,7 +26,7 @@ export default function MyList() {
 	}
 
 	return (
-		<main className="h-full overflow-y-auto p-4">
+		<main className="@container h-full overflow-y-auto p-4">
 			<div className="mx-auto flex max-w-6xl flex-col gap-4">
 				<h1 className="font-semibold text-2xl">My List</h1>
 				<GameList games={data.map(toReleaseGame)} />

@@ -249,7 +249,7 @@ export default function ReleasesPage() {
 			</div>
 
 			{/* Main content */}
-			<main className="flex-1 overflow-hidden p-4">
+			<main className="@container flex-1 overflow-hidden p-4">
 				{status === "pending" && layout === "grid" && (
 					<div className="h-full overflow-y-auto">
 						<div className={GAME_GRID_CLASSNAME}>

@@ -58,7 +58,6 @@ export function SearchResultRow({ game }: { game: ReleaseGame }) {
 					isPending={isPending}
 					onToggle={() => toggleStatus(game, GAME_STATUSES_ENUM.WISHLIST)}
 					trackedStatus={trackedStatus}
-					variant="compact"
 				/>
 				<StatusSelect
 					disabled={isPending}

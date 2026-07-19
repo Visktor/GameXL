@@ -1,6 +1,4 @@
-import { Button } from "@GameXL/ui/components/button";
 import { TRPCClientError } from "@trpc/client";
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { ImageLightbox } from "@/components/image-lightbox";
@@ -150,24 +148,17 @@ export function GamePreviewPanelContent({ igdbId }: { igdbId: string }) {
 							}
 						}}
 						trackedStatus={trackedStatus ?? null}
-						variant="full"
 					/>
 					<StatusButtonGroup
-						disabled={addMutation.isPending}
-						onChange={(trackStatus) => addMutation.mutate(trackStatus)}
+						disabled={addMutation.isPending || removeMutation.isPending}
+						onChange={(trackStatus) =>
+							trackStatus
+								? addMutation.mutate(trackStatus)
+								: removeMutation.mutate()
+						}
 						statuses={TRACK_STATUSES}
 						value={trackedStatus ?? null}
 					/>
-					{trackedStatus && (
-						<Button
-							disabled={removeMutation.isPending}
-							onClick={() => removeMutation.mutate()}
-							size="sm"
-							variant="ghost"
-						>
-							<Trash2 className="h-4 w-4" />
-						</Button>
-					)}
 				</div>
 
 				<ScreenshotGrid
