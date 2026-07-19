@@ -124,7 +124,6 @@ export default function SearchPage() {
 					initialQuery={q}
 					key={clearSignal}
 					onQueryChange={(nextQ) => updateSearchParams({ q: nextQ })}
-					typeaheadResults={games}
 				/>
 
 				<div className="flex flex-wrap items-center justify-between gap-3">
