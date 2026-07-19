@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../index";
-import { searchModeSchema, searchQuerySchema } from "../schemas/search.schema";
-import { searchGames } from "../services/search.service";
+import {
+	searchModeSchema,
+	searchQuerySchema,
+	searchSortBySchema,
+} from "../schemas/search.schema";
+import { listGenres, searchGames } from "../services/search.service";
 import { paginationInput } from "../utils/pagination";
 
 export const searchRouter = router({
@@ -11,7 +15,11 @@ export const searchRouter = router({
 				...paginationInput.shape,
 				q: searchQuerySchema,
 				mode: searchModeSchema.default("contains"),
+				genres: z.array(z.string()).default([]),
+				minRating: z.number().min(0).max(100).optional(),
+				sortBy: searchSortBySchema.default("popularity"),
 			})
 		)
 		.query(searchGames),
+	genres: publicProcedure.query(() => listGenres()),
 });
