@@ -54,7 +54,7 @@ export default function SearchPage() {
 	const games = data?.pages.flatMap((p) => p.games) ?? [];
 
 	return (
-		<main className="h-full overflow-y-auto p-4">
+		<main className="@container h-full overflow-y-auto p-4">
 			<div className="mb-4 flex items-center justify-between">
 				<h1 className="text-lg">
 					{q.length > 0 ? (

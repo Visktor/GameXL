@@ -1,4 +1,5 @@
 import { Toaster } from "@GameXL/ui/components/sonner";
+import { TooltipProvider } from "@GameXL/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
@@ -34,17 +35,19 @@ function RootLayout() {
 				disableTransitionOnChange
 				storageKey="vite-ui-theme"
 			>
-				<div className="grid h-svh grid-rows-[auto_1fr]">
-					<Header />
-					<div className="flex overflow-hidden">
-						<div className="min-w-0 flex-1 overflow-hidden">
-							<Outlet />
+				<TooltipProvider>
+					<div className="grid h-svh grid-rows-[auto_1fr]">
+						<Header />
+						<div className="flex overflow-hidden">
+							<div className="min-w-0 flex-1 overflow-hidden">
+								<Outlet />
+							</div>
+							<GamePreviewPanel />
 						</div>
-						<GamePreviewPanel />
 					</div>
-				</div>
-				<SearchCommandDialog />
-				<Toaster richColors />
+					<SearchCommandDialog />
+					<Toaster richColors />
+				</TooltipProvider>
 			</ThemeProvider>
 			{import.meta.env.DEV && (
 				<ReactQueryDevtools buttonPosition="bottom-right" position="bottom" />

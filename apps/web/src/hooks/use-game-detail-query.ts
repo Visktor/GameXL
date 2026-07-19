@@ -11,10 +11,10 @@ export function useGameDetailQuery(igdbId: string | undefined) {
 		enabled: Boolean(igdbId),
 	});
 
-	const trackedStatus = useTrackedGamesStore(
-		(state) =>
-			(igdbId ? state.statusByGameId[igdbId] : undefined) ??
-			query.data?.trackedStatus
+	const trackedStatus = useTrackedGamesStore((state) =>
+		igdbId && igdbId in state.statusByGameId
+			? state.statusByGameId[igdbId]
+			: (query.data?.trackedStatus ?? null)
 	);
 	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
 

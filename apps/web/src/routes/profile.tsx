@@ -65,7 +65,7 @@ export default function Profile() {
 	const isOwnProfile = session?.user.username === username;
 
 	return (
-		<main className="h-full overflow-y-auto p-4">
+		<main className="@container h-full overflow-y-auto p-4">
 			<div className="mx-auto flex max-w-6xl flex-col gap-6">
 				<div className="flex items-center gap-4">
 					{profile.image ? (

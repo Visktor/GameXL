@@ -1,11 +1,8 @@
-import { Button } from "@GameXL/ui/components/button";
 import {
 	HoverCard,
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
-import { useMutation } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { StatusButtonGroup } from "@/components/status-button-group";
@@ -16,10 +13,13 @@ import {
 	type GameStatus,
 	TRACK_STATUSES,
 } from "@/constants/game-status";
+import {
+	resolveTrackedStatus,
+	useTrackGameMutation,
+} from "@/hooks/use-track-game-mutation";
 import { useAutoplayPreferenceStore } from "@/stores/autoplay-preference-store";
 import { useGamePreviewPanelStore } from "@/stores/game-preview-panel-store";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
-import { trpcClient } from "@/utils/trpc";
 import { GameCardGridBody } from "./game-card-grid-body";
 import { GameCardListBody } from "./game-card-list-body";
 import { GameCardStatusRow } from "./game-card-status-row";
@@ -58,53 +58,31 @@ export function GameCard({
 		openPreviewPanel(game.igdbId);
 	};
 
-	const storedStatus = useTrackedGamesStore(
-		(state) => state.statusByGameId[game.igdbId]
+	const storeStatus = useTrackedGamesStore((state) =>
+		resolveTrackedStatus(game, state.statusByGameId)
 	);
-	const trackedStatus = readOnly
-		? game.trackedStatus
-		: (storedStatus ?? game.trackedStatus);
-	const setTrackedStatus = useTrackedGamesStore((state) => state.setStatus);
+	const trackedStatus = readOnly ? game.trackedStatus : storeStatus;
 
-	const addMutation = useMutation({
-		mutationFn: (status: GameStatus) =>
-			trpcClient.userGame.add.mutate({
-				gameData: {
-					igdbId: game.igdbId,
-					title: game.title,
-					coverUrl: game.coverUrl,
-					trailerVideoId: game.trailerVideoId,
-					releaseDate: game.releaseDate,
-					igdbScore: game.igdbScore,
-				},
-				status,
-			}),
-		onMutate: (status) => setTrackedStatus(game.igdbId, status),
-		onError: () => setTrackedStatus(game.igdbId, game.trackedStatus),
-	});
-
-	const removeMutation = useMutation({
-		mutationFn: () =>
-			trpcClient.userGame.remove.mutate({ igdbId: game.igdbId }),
-		onMutate: () => setTrackedStatus(game.igdbId, null),
-		onError: () => setTrackedStatus(game.igdbId, game.trackedStatus),
-	});
+	const { addMutation, removeMutation } = useTrackGameMutation();
 
 	const isFavoritePending = addMutation.isPending || removeMutation.isPending;
 	const handleToggleFavorite = () => {
 		if (trackedStatus === GAME_STATUSES_ENUM.WISHLIST) {
-			removeMutation.mutate();
+			removeMutation.mutate({ game });
 		} else {
-			addMutation.mutate(GAME_STATUSES_ENUM.WISHLIST);
+			addMutation.mutate({ game, status: GAME_STATUSES_ENUM.WISHLIST });
 		}
 	};
 	const handleQuickAddStatus = (status: GameStatus) =>
-		addMutation.mutate(status);
+		addMutation.mutate({ game, status });
 
 	const statusRow = (
 		<GameCardStatusRow
+			isList={isList}
 			isQuickAddPending={addMutation.isPending}
+			isRemovePending={removeMutation.isPending}
 			onQuickAddStatus={handleQuickAddStatus}
+			onRemoveStatus={() => removeMutation.mutate({ game })}
 			readOnly={readOnly}
 			score={game.igdbScore}
 			trackedStatus={trackedStatus}
@@ -191,28 +169,16 @@ export function GameCard({
 								</span>
 							)
 						) : (
-							<>
-								<StatusButtonGroup
-									disabled={addMutation.isPending}
-									onChange={(status) => addMutation.mutate(status)}
-									statuses={TRACK_STATUSES}
-									value={trackedStatus}
-								/>
-
-								{trackedStatus && (
-									<Button
-										disabled={removeMutation.isPending}
-										onClick={(e) => {
-											e.preventDefault();
-											removeMutation.mutate();
-										}}
-										size="sm"
-										variant="ghost"
-									>
-										<Trash2 className="h-4 w-4" />
-									</Button>
-								)}
-							</>
+							<StatusButtonGroup
+								disabled={isFavoritePending}
+								onChange={(status) =>
+									status
+										? addMutation.mutate({ game, status })
+										: removeMutation.mutate({ game })
+								}
+								statuses={TRACK_STATUSES}
+								value={trackedStatus}
+							/>
 						)}
 					</div>
 				</div>

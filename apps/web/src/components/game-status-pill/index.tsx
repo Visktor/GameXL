@@ -12,7 +12,7 @@ import { StatusIcon } from "./status-icon";
  * / .QuickAdd — the caller decides what (if anything) goes in the right slot.
  */
 export function GameStatusPill({ children }: { children: ReactNode }) {
-	return <div className="flex items-stretch">{children}</div>;
+	return <div className="flex min-w-0 items-stretch">{children}</div>;
 }
 
 GameStatusPill.Rating = Rating;
