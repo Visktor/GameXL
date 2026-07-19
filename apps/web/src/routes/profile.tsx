@@ -65,8 +65,8 @@ export default function Profile() {
 	const isOwnProfile = session?.user.username === username;
 
 	return (
-		<main className="@container h-full overflow-y-auto p-4">
-			<div className="mx-auto flex max-w-6xl flex-col gap-6">
+		<main className="@container flex h-full flex-col overflow-hidden p-4">
+			<div className="mx-auto w-full max-w-6xl shrink-0 pb-6">
 				<div className="flex items-center gap-4">
 					{profile.image ? (
 						<img
@@ -90,7 +90,9 @@ export default function Profile() {
 						</p>
 					</div>
 				</div>
+			</div>
 
+			<div className="mx-auto w-full max-w-6xl flex-1 overflow-hidden">
 				<GameList
 					games={gamesQuery.data.map(toReleaseGame)}
 					readOnly={!isOwnProfile}
