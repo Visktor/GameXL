@@ -26,9 +26,11 @@ export default function MyList() {
 	}
 
 	return (
-		<main className="@container h-full overflow-y-auto p-4">
-			<div className="mx-auto flex max-w-6xl flex-col gap-4">
+		<main className="@container flex h-full flex-col overflow-hidden p-4">
+			<div className="mx-auto w-full max-w-6xl shrink-0 pb-4">
 				<h1 className="font-semibold text-2xl">My List</h1>
+			</div>
+			<div className="mx-auto w-full max-w-6xl flex-1 overflow-hidden">
 				<GameList games={data.map(toReleaseGame)} />
 			</div>
 		</main>

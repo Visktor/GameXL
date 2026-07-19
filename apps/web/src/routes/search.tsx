@@ -1,141 +1,165 @@
-import { Skeleton } from "@GameXL/ui/components/skeleton";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { SearchIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 
-import { GameCard } from "@/components/game-card";
-import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
+import { GameListView } from "@/components/game-list-view";
+import { SearchGenreFilter } from "@/components/search-genre-filter";
+import { SearchInput } from "@/components/search-input";
+import { SearchNoResults } from "@/components/search-no-results";
+import { SearchRatingFilter } from "@/components/search-rating-filter";
+import type { SearchSortBy } from "@/components/search-sort-select";
+import { SearchSortSelect } from "@/components/search-sort-select";
+import { SearchTrendingSection } from "@/components/search-trending-section";
+import { RATING_SCALE } from "@/constants/rating";
+import { SearchParamsUtils } from "@/utils/search-params";
 import { trpcClient } from "@/utils/trpc";
 
-const SEARCH_MODES = [
+type SearchMode = "contains" | "fulltext";
+
+const SEARCH_MODES: { key: SearchMode; label: string }[] = [
 	{ key: "contains", label: "Contains" },
 	{ key: "fulltext", label: "Full text" },
-] as const;
-
-type SearchMode = (typeof SEARCH_MODES)[number]["key"];
+];
 
 export default function SearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const [clearSignal, setClearSignal] = useState(0);
+
 	const q = searchParams.get("q") ?? "";
 	const mode: SearchMode = (searchParams.get("mode") ??
 		"contains") as SearchMode;
-	const bottomRef = useRef<HTMLDivElement>(null);
+	const genres = SearchParamsUtils.parseGenres(searchParams.get("genres"));
+	const ratingStars = SearchParamsUtils.parseRatingStars(
+		searchParams.get("rating")
+	);
+	const sortBy: SearchSortBy = (searchParams.get("sortBy") ??
+		"popularity") as SearchSortBy;
+
+	const isEmptyState =
+		q.length === 0 && genres.length === 0 && ratingStars === 0;
+	const minRating = ratingStars > 0 ? ratingStars * RATING_SCALE : undefined;
+
+	const updateSearchParams = (
+		partial: Partial<{
+			genres: string[];
+			mode: SearchMode;
+			q: string;
+			ratingStars: number;
+			sortBy: SearchSortBy;
+		}>
+	) => {
+		setSearchParams(
+			SearchParamsUtils.buildSearchParams({
+				q,
+				mode,
+				genres,
+				ratingStars,
+				sortBy,
+				...partial,
+			})
+		);
+	};
+
+	const handleClearFilters = () => {
+		setClearSignal((n) => n + 1);
+		setSearchParams(
+			SearchParamsUtils.buildSearchParams({
+				q: "",
+				mode,
+				genres: [],
+				ratingStars: 0,
+				sortBy,
+			})
+		);
+	};
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
 		useInfiniteQuery({
-			queryKey: ["search", q, mode],
+			queryKey: ["search", q, mode, genres, minRating, sortBy],
 			queryFn: ({ pageParam }) =>
-				trpcClient.search.list.query({ q, mode, offset: pageParam }),
+				trpcClient.search.list.query({
+					q,
+					mode,
+					genres,
+					minRating,
+					sortBy,
+					offset: pageParam,
+				}),
 			initialPageParam: 0,
 			getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined,
-			enabled: q.length > 0,
+			enabled: !isEmptyState,
 		});
-
-	useEffect(() => {
-		const el = bottomRef.current;
-		if (!el) {
-			return;
-		}
-
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-					fetchNextPage();
-				}
-			},
-			{ threshold: 0.1 }
-		);
-
-		observer.observe(el);
-		return () => observer.disconnect();
-	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	const games = data?.pages.flatMap((p) => p.games) ?? [];
 
 	return (
-		<main className="@container h-full overflow-y-auto p-4">
-			<div className="mb-4 flex items-center justify-between">
-				<h1 className="text-lg">
-					{q.length > 0 ? (
-						<>
-							Search results for <span className="font-medium">"{q}"</span>
-						</>
-					) : (
-						"Search"
-					)}
-				</h1>
-				{q.length > 0 && (
-					<div className="flex overflow-hidden rounded-none border">
-						{SEARCH_MODES.map(({ key, label }) => (
-							<button
-								className={`px-2.5 py-1 text-xs transition-colors ${
-									mode === key
-										? "bg-accent font-medium"
-										: "text-muted-foreground hover:bg-accent/50"
-								}`}
-								key={key}
-								onClick={() => setSearchParams({ q, mode: key })}
-								type="button"
-							>
-								{label}
-							</button>
-						))}
+		<main className="@container flex h-full flex-col overflow-hidden">
+			<div className="flex shrink-0 flex-col gap-3 border-b p-4">
+				<SearchInput
+					initialQuery={q}
+					key={clearSignal}
+					onQueryChange={(nextQ) => updateSearchParams({ q: nextQ })}
+				/>
+
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<SearchGenreFilter
+						onToggle={(genre) =>
+							updateSearchParams({
+								genres: genres.includes(genre)
+									? genres.filter((g) => g !== genre)
+									: [...genres, genre],
+							})
+						}
+						selectedGenres={genres}
+					/>
+
+					<div className="flex items-center gap-3">
+						<SearchRatingFilter
+							minRating={ratingStars}
+							onChange={(value) => updateSearchParams({ ratingStars: value })}
+						/>
+						<SearchSortSelect
+							onChange={(value) => updateSearchParams({ sortBy: value })}
+							value={sortBy}
+						/>
+						{q.length > 0 && (
+							<div className="flex overflow-hidden rounded-none border">
+								{SEARCH_MODES.map(({ key, label }) => (
+									<button
+										className={`px-2.5 py-1 text-xs transition-colors ${
+											mode === key
+												? "bg-accent font-medium"
+												: "text-muted-foreground hover:bg-accent/50"
+										}`}
+										key={key}
+										onClick={() => updateSearchParams({ mode: key })}
+										type="button"
+									>
+										{label}
+									</button>
+								))}
+							</div>
+						)}
 					</div>
-				)}
+				</div>
 			</div>
 
-			{q.length === 0 && (
-				<div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-					<SearchIcon className="size-6" />
-					<p>Type a game title to search.</p>
-				</div>
-			)}
-
-			{q.length > 0 && status === "pending" && (
-				<div className={GAME_GRID_CLASSNAME}>
-					{Array.from({ length: 20 }).map((_, i) => (
-						// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
-						<div key={i}>
-							<Skeleton className="aspect-[3/4] w-full rounded-sm" />
-							<Skeleton className="mt-1 h-4 w-3/4" />
-						</div>
-					))}
-				</div>
-			)}
-
-			{status === "error" && (
-				<div className="flex h-full items-center justify-center">
-					<p className="text-muted-foreground">
-						Failed to search games. Please try again.
-					</p>
-				</div>
-			)}
-
-			{status === "success" && games.length === 0 && (
-				<div className="flex h-full items-center justify-center">
-					<p className="text-muted-foreground">No games found for "{q}".</p>
-				</div>
-			)}
-
-			{status === "success" && games.length > 0 && (
-				<div className={GAME_GRID_CLASSNAME}>
-					{games.map((game) => (
-						<GameCard game={game} key={game.igdbId} />
-					))}
-				</div>
-			)}
-
-			<div className="py-4" ref={bottomRef}>
-				{isFetchingNextPage && (
-					<div className="flex justify-center">
-						<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-foreground" />
-					</div>
-				)}
-				{status === "success" && !hasNextPage && games.length > 0 && (
-					<p className="text-center text-muted-foreground text-xs">
-						You've seen all results.
-					</p>
+			<div className="flex-1 overflow-hidden p-4">
+				{isEmptyState ? (
+					<SearchTrendingSection />
+				) : (
+					<GameListView
+						emptyState={
+							<SearchNoResults onClearFilters={handleClearFilters} query={q} />
+						}
+						endMessage="You've seen all results."
+						errorMessage="Failed to search games. Please try again."
+						fetchNextPage={fetchNextPage}
+						games={games}
+						hasNextPage={Boolean(hasNextPage)}
+						isFetchingNextPage={isFetchingNextPage}
+						status={status}
+					/>
 				)}
 			</div>
 		</main>

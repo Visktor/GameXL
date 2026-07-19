@@ -3,13 +3,12 @@ import { StarRating } from "@/components/star-rating";
 import { StatusSelect } from "@/components/status-select";
 import { WishlistButton } from "@/components/wishlist-button";
 import { GAME_STATUSES_ENUM } from "@/constants/game-status";
+import { RATING_SCALE } from "@/constants/rating";
 import {
 	resolveTrackedStatus,
 	useTrackGameMutation,
 } from "@/hooks/use-track-game-mutation";
 import { useTrackedGamesStore } from "@/stores/tracked-games-store";
-
-const RATING_SCALE = 20;
 
 export function SearchResultRow({ game }: { game: ReleaseGame }) {
 	const year = game.releaseDate

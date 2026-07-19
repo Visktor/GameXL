@@ -7,10 +7,12 @@ import {
 } from "@GameXL/ui/components/select";
 import { Tabs, TabsList, TabsTrigger } from "@GameXL/ui/components/tabs";
 import { useMemo, useState } from "react";
-
-import { GameCard, type ReleaseGame } from "@/components/game-card";
-import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
+import type { ReleaseGame } from "@/components/game-card";
+import { GameListView } from "@/components/game-list-view";
 import { GAME_STATUS_META, GAME_STATUSES } from "@/constants/game-status";
+
+// GameList's data is a fully-loaded, non-paginated array — nothing to fetch.
+const NO_OP = () => undefined;
 
 const TABS = ["ALL", ...GAME_STATUSES] as const;
 type TabValue = (typeof TABS)[number];
@@ -85,8 +87,8 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 	}, [games, tab, sort]);
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex flex-wrap items-center justify-between gap-2">
+		<div className="flex h-full flex-col gap-4">
+			<div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
 				<Tabs onValueChange={(value) => setTab(value as TabValue)} value={tab}>
 					<TabsList>
 						{TABS.map((value) => (
@@ -114,17 +116,21 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 				</Select>
 			</div>
 
-			{visibleGames.length === 0 ? (
-				<p className="py-12 text-center text-muted-foreground text-sm">
-					Nothing here yet.
-				</p>
-			) : (
-				<div className={GAME_GRID_CLASSNAME}>
-					{visibleGames.map((game) => (
-						<GameCard game={game} key={game.igdbId} readOnly={readOnly} />
-					))}
-				</div>
-			)}
+			<div className="flex-1 overflow-hidden">
+				<GameListView
+					emptyState={
+						<p className="py-12 text-center text-muted-foreground text-sm">
+							Nothing here yet.
+						</p>
+					}
+					fetchNextPage={NO_OP}
+					games={visibleGames}
+					hasNextPage={false}
+					isFetchingNextPage={false}
+					readOnly={readOnly}
+					status="success"
+				/>
+			</div>
 		</div>
 	);
 }
