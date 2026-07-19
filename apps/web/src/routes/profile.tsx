@@ -71,6 +71,9 @@ export default function Profile() {
 
 	const profile = profileQuery.data;
 	const isOwnProfile = session?.user.username === username;
+	const publicLists = listsQuery.data ?? [];
+	const showListsSection =
+		listsQuery.status === "success" && (isOwnProfile || publicLists.length > 0);
 
 	return (
 		<main className="@container flex h-full flex-col overflow-hidden p-4">
@@ -106,23 +109,22 @@ export default function Profile() {
 					readOnly={!isOwnProfile}
 				/>
 
-				{listsQuery.status === "success" &&
-					(isOwnProfile || listsQuery.data.length > 0) && (
-						<div className="flex flex-col gap-4">
-							<h2 className="font-semibold text-xl">Public Lists</h2>
-							{listsQuery.data.length === 0 ? (
-								<p className="text-muted-foreground text-sm">
-									No public lists yet.
-								</p>
-							) : (
-								<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-									{listsQuery.data.map((list) => (
-										<GameListCard key={list.id} list={list} readOnly />
-									))}
-								</div>
-							)}
-						</div>
-					)}
+				{showListsSection && (
+					<div className="flex flex-col gap-4">
+						<h2 className="font-semibold text-xl">Public Lists</h2>
+						{publicLists.length === 0 ? (
+							<p className="text-muted-foreground text-sm">
+								No public lists yet.
+							</p>
+						) : (
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+								{publicLists.map((list) => (
+									<GameListCard key={list.id} list={list} readOnly />
+								))}
+							</div>
+						)}
+					</div>
+				)}
 			</div>
 		</main>
 	);

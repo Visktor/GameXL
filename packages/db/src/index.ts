@@ -1,7 +1,12 @@
 import { env } from "@GameXL/env/server";
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { PrismaClient } from "../prisma/generated/client";
+import {
+	PrismaClient,
+	Prisma as PrismaNamespace,
+} from "../prisma/generated/client";
+
+export const Prisma = PrismaNamespace;
 
 export function createPrismaClient() {
 	const adapter = new PrismaPg({

@@ -9,14 +9,12 @@ import { GameCard, type ReleaseGame } from "@/components/game-card";
 import { trpcClient } from "@/utils/trpc";
 
 interface SortableListItemProps {
-	dragDisabled?: boolean;
 	game: ReleaseGame;
 	isOwner: boolean;
 	listId: string;
 }
 
 export function SortableListItem({
-	dragDisabled = false,
 	game,
 	isOwner,
 	listId,
@@ -29,7 +27,7 @@ export function SortableListItem({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: game.igdbId, disabled: !isOwner || dragDisabled });
+	} = useSortable({ id: game.igdbId, disabled: !isOwner });
 
 	const removeMutation = useMutation({
 		mutationFn: () =>
@@ -54,20 +52,16 @@ export function SortableListItem({
 		>
 			{isOwner && (
 				<div className="absolute inset-x-0 top-0 z-[60] flex justify-between p-1">
-					{dragDisabled ? (
-						<span />
-					) : (
-						<Button
-							aria-label="Drag to reorder"
-							className="cursor-grab touch-none active:cursor-grabbing"
-							size="icon-xs"
-							variant="secondary"
-							{...attributes}
-							{...listeners}
-						>
-							<GripVerticalIcon className="size-3" />
-						</Button>
-					)}
+					<Button
+						aria-label="Drag to reorder"
+						className="cursor-grab touch-none active:cursor-grabbing"
+						size="icon-xs"
+						variant="secondary"
+						{...attributes}
+						{...listeners}
+					>
+						<GripVerticalIcon className="size-3" />
+					</Button>
 					<Button
 						aria-label="Remove from list"
 						disabled={removeMutation.isPending}

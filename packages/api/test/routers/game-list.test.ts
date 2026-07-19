@@ -1,33 +1,48 @@
-import db from "@GameXL/db";
+import db, { Prisma } from "@GameXL/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "@/routers/index";
 import { createTestContext } from "../support/context";
 
-vi.mock("@GameXL/db", () => ({
-	createPrismaClient: vi.fn(),
-	default: {
-		gameList: {
-			create: vi.fn(),
-			update: vi.fn(),
-			delete: vi.fn(),
-			findMany: vi.fn(),
-			findUnique: vi.fn(),
+vi.mock("@GameXL/db", () => {
+	class MockPrismaClientKnownRequestError extends Error {
+		code: string;
+
+		constructor(message: string, code: string) {
+			super(message);
+			this.code = code;
+		}
+	}
+
+	return {
+		createPrismaClient: vi.fn(),
+		Prisma: {
+			PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
 		},
-		gameListItem: {
-			aggregate: vi.fn(),
-			upsert: vi.fn(),
-			deleteMany: vi.fn(),
-			findMany: vi.fn(),
-			update: vi.fn(),
+		default: {
+			gameList: {
+				create: vi.fn(),
+				update: vi.fn(),
+				delete: vi.fn(),
+				findMany: vi.fn(),
+				findUnique: vi.fn(),
+			},
+			gameListItem: {
+				aggregate: vi.fn(),
+				upsert: vi.fn(),
+				deleteMany: vi.fn(),
+				findMany: vi.fn(),
+				update: vi.fn(),
+			},
+			game: { findUnique: vi.fn(), upsert: vi.fn() },
+			user: { findUnique: vi.fn() },
+			userGame: { findMany: vi.fn() },
+			$transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
 		},
-		game: { findUnique: vi.fn(), upsert: vi.fn() },
-		user: { findUnique: vi.fn() },
-		userGame: { findMany: vi.fn() },
-		$transaction: vi.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
-	},
-}));
+	};
+});
 
 interface MockedDb {
+	$transaction: ReturnType<typeof vi.fn>;
 	game: {
 		findUnique: ReturnType<typeof vi.fn>;
 		upsert: ReturnType<typeof vi.fn>;
@@ -94,13 +109,28 @@ describe("gameList.create", () => {
 	});
 
 	it("surfaces a duplicate list name as a conflict", async () => {
-		mockedDb.gameList.create.mockRejectedValue(new Error("unique violation"));
+		mockedDb.gameList.create.mockRejectedValue(
+			new Prisma.PrismaClientKnownRequestError(
+				"Unique constraint failed",
+				"P2002"
+			)
+		);
 
 		const caller = appRouter.createCaller(sessionCtx);
 
 		await expect(
 			caller.gameList.create({ name: "Backlog", isPublic: false })
 		).rejects.toMatchObject({ code: "CONFLICT" });
+	});
+
+	it("surfaces a non-conflict database error as an internal error", async () => {
+		mockedDb.gameList.create.mockRejectedValue(new Error("connection refused"));
+
+		const caller = appRouter.createCaller(sessionCtx);
+
+		await expect(
+			caller.gameList.create({ name: "Backlog", isPublic: false })
+		).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
 	});
 });
 
@@ -218,5 +248,22 @@ describe("gameList.reorder", () => {
 			where: { id: "item-a" },
 			data: { position: 1 },
 		});
+	});
+
+	it("logs and surfaces an internal error when the transaction fails", async () => {
+		mockedDb.gameList.findUnique.mockResolvedValue({
+			id: "list-1",
+			userId: "user-1",
+		});
+		mockedDb.gameListItem.findMany.mockResolvedValue([
+			{ id: "item-a", game: { externalApiKey: "a" } },
+		]);
+		mockedDb.$transaction.mockRejectedValueOnce(new Error("connection lost"));
+
+		const caller = appRouter.createCaller(sessionCtx);
+
+		await expect(
+			caller.gameList.reorder({ listId: "list-1", orderedIgdbIds: ["a"] })
+		).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
 	});
 });

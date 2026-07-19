@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { mockTrpcProcedure } from "./support/trpc-route";
 
 const SESSION_USER = {
@@ -25,8 +25,8 @@ function buildList(overrides: Partial<Record<string, unknown>> = {}) {
 	};
 }
 
-test("creating a list from My Lists shows it in the grid", async ({ page }) => {
-	await page.route("**/api/auth/get-session**", (route) =>
+function mockSession(page: Page) {
+	return page.route("**/api/auth/get-session**", (route) =>
 		route.fulfill({
 			status: 200,
 			contentType: "application/json",
@@ -36,6 +36,10 @@ test("creating a list from My Lists shows it in the grid", async ({ page }) => {
 			}),
 		})
 	);
+}
+
+test("creating a list from My Lists shows it in the grid", async ({ page }) => {
+	await mockSession(page);
 
 	let hasList = false;
 	await mockTrpcProcedure(page, "gameList.myLists", () =>
@@ -52,7 +56,7 @@ test("creating a list from My Lists shows it in the grid", async ({ page }) => {
 	await page.goto("/lists");
 	await expect(page.getByText("Nothing here yet.")).toBeVisible();
 
-	await page.getByRole("button", { name: "New list" }).click();
+	await page.getByRole("link", { name: "New list" }).click();
 	await page.getByLabel("Name").fill("Best RPGs");
 	await page.getByRole("button", { name: "Create" }).click();
 
@@ -63,16 +67,7 @@ test("creating a list from My Lists shows it in the grid", async ({ page }) => {
 });
 
 test("deleting a list removes it from the grid", async ({ page }) => {
-	await page.route("**/api/auth/get-session**", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({
-				user: SESSION_USER,
-				session: { id: "session-1", userId: SESSION_USER.id },
-			}),
-		})
-	);
+	await mockSession(page);
 
 	let deleted = false;
 	await mockTrpcProcedure(page, "gameList.myLists", () =>
@@ -96,19 +91,42 @@ test("deleting a list removes it from the grid", async ({ page }) => {
 	await expect(page.getByText("Nothing here yet.")).toBeVisible();
 });
 
+test("renaming a list via its deep link fetches and pre-fills the form", async ({
+	page,
+}) => {
+	await mockSession(page);
+
+	await mockTrpcProcedure(page, "gameList.get", () => ({
+		...buildList(),
+		isOwner: true,
+		items: [],
+	}));
+
+	let updateInput: unknown;
+	await mockTrpcProcedure(page, "gameList.update", (input) => {
+		updateInput = input;
+		return { ...buildList(), name: "Best RPGs Ever" };
+	});
+
+	await page.goto("/lists/list-1/edit");
+
+	await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+		"Best RPGs"
+	);
+
+	await page.getByLabel("Name", { exact: true }).fill("Best RPGs Ever");
+	await page.getByRole("button", { name: "Save" }).click();
+
+	await expect
+		.poll(() => updateInput)
+		.toMatchObject({ listId: "list-1", name: "Best RPGs Ever" });
+	await expect(page).toHaveURL("/lists/list-1");
+});
+
 test("list detail page renders items and removes one from the list", async ({
 	page,
 }) => {
-	await page.route("**/api/auth/get-session**", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({
-				user: SESSION_USER,
-				session: { id: "session-1", userId: SESSION_USER.id },
-			}),
-		})
-	);
+	await mockSession(page);
 
 	const items = [
 		{
@@ -154,19 +172,10 @@ test("list detail page renders items and removes one from the list", async ({
 		.toMatchObject({ listId: "list-1", igdbId: "1" });
 });
 
-test("sorting a list by title reorders it and disables dragging", async ({
+test("sorting a list reorders it, persists the new order, and keeps dragging enabled", async ({
 	page,
 }) => {
-	await page.route("**/api/auth/get-session**", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({
-				user: SESSION_USER,
-				session: { id: "session-1", userId: SESSION_USER.id },
-			}),
-		})
-	);
+	await mockSession(page);
 
 	const items = [
 		{
@@ -195,6 +204,11 @@ test("sorting a list by title reorders it and disables dragging", async ({
 		items,
 	}));
 
+	let reorderInput: unknown;
+	await mockTrpcProcedure(page, "gameList.reorder", (input) => {
+		reorderInput = input;
+	});
+
 	await page.goto("/lists/list-1");
 
 	const titles = page.locator("p.truncate");
@@ -203,11 +217,15 @@ test("sorting a list by title reorders it and disables dragging", async ({
 		page.getByRole("button", { name: "Drag to reorder" })
 	).toHaveCount(2);
 
-	await page.getByRole("combobox").click();
-	await page.getByRole("option", { name: "Title (A-Z)" }).click();
+	await page.getByRole("button", { name: "Sort" }).click();
+	await page.getByRole("menuitem", { name: "Title (A-Z)" }).click();
 
 	await expect(titles).toHaveText(["Disco Elysium", "Hollow Knight"]);
+	await expect
+		.poll(() => reorderInput)
+		.toMatchObject({ listId: "list-1", orderedIgdbIds: ["1", "2"] });
+
 	await expect(
 		page.getByRole("button", { name: "Drag to reorder" })
-	).toHaveCount(0);
+	).toHaveCount(2);
 });

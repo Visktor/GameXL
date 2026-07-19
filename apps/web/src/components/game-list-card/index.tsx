@@ -20,7 +20,6 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 
 import { DeleteListDialog } from "@/components/delete-list-dialog";
-import { ListFormDialog } from "@/components/list-form-dialog";
 import { trpcClient } from "@/utils/trpc";
 
 interface GameListCardProps {
@@ -29,7 +28,6 @@ interface GameListCardProps {
 }
 
 export function GameListCard({ list, readOnly = false }: GameListCardProps) {
-	const [isRenameOpen, setIsRenameOpen] = useState(false);
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 	const queryClient = useQueryClient();
 
@@ -73,7 +71,9 @@ export function GameListCard({ list, readOnly = false }: GameListCardProps) {
 									<EllipsisIcon className="size-4" />
 								</DropdownMenuTrigger>
 								<DropdownMenuContent>
-									<DropdownMenuItem onClick={() => setIsRenameOpen(true)}>
+									<DropdownMenuItem
+										render={<Link to={`/lists/${list.id}/edit`} />}
+									>
 										<PencilIcon className="size-4" /> Rename
 									</DropdownMenuItem>
 									<DropdownMenuItem
@@ -107,19 +107,12 @@ export function GameListCard({ list, readOnly = false }: GameListCardProps) {
 			</Card>
 
 			{!readOnly && (
-				<>
-					<ListFormDialog
-						list={list}
-						onOpenChange={setIsRenameOpen}
-						open={isRenameOpen}
-					/>
-					<DeleteListDialog
-						listId={list.id}
-						listName={list.name}
-						onOpenChange={setIsDeleteOpen}
-						open={isDeleteOpen}
-					/>
-				</>
+				<DeleteListDialog
+					listId={list.id}
+					listName={list.name}
+					onOpenChange={setIsDeleteOpen}
+					open={isDeleteOpen}
+				/>
 			)}
 		</>
 	);

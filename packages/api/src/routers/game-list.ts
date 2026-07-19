@@ -7,50 +7,40 @@ import {
 	reorderGameListSchema,
 	updateGameListSchema,
 } from "../schemas/game-list.schema";
-import {
-	addGameToList,
-	createGameList,
-	deleteGameList,
-	getGameList,
-	getGameListsByUsername,
-	getMyGameLists,
-	removeGameFromList,
-	reorderGameList,
-	updateGameList,
-} from "../services/game-list.service";
+import { GameListService } from "../services/game-list.service";
 
 export const gameListRouter = router({
-	myLists: protectedProcedure.query(getMyGameLists),
+	myLists: protectedProcedure.query(GameListService.myLists),
 
 	listByUsername: publicProcedure
 		.input(z.object({ username: z.string() }))
-		.query(getGameListsByUsername),
+		.query(GameListService.listByUsername),
 
 	get: publicProcedure
 		.input(z.object({ listId: z.string() }))
-		.query(getGameList),
+		.query(GameListService.get),
 
 	create: protectedProcedure
 		.input(createGameListSchema)
-		.mutation(createGameList),
+		.mutation(GameListService.create),
 
 	update: protectedProcedure
 		.input(updateGameListSchema)
-		.mutation(updateGameList),
+		.mutation(GameListService.update),
 
 	remove: protectedProcedure
 		.input(z.object({ listId: z.string() }))
-		.mutation(deleteGameList),
+		.mutation(GameListService.remove),
 
 	addGame: protectedProcedure
 		.input(addGameToListSchema)
-		.mutation(addGameToList),
+		.mutation(GameListService.addGame),
 
 	removeGame: protectedProcedure
 		.input(removeGameFromListSchema)
-		.mutation(removeGameFromList),
+		.mutation(GameListService.removeGame),
 
 	reorder: protectedProcedure
 		.input(reorderGameListSchema)
-		.mutation(reorderGameList),
+		.mutation(GameListService.reorder),
 });

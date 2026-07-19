@@ -35,14 +35,6 @@ const SORT_LABELS: Record<SortOption, string> = {
 	score: "IGDB Score",
 };
 
-function sortGames(games: ReleaseGame[], sort: SortOption): ReleaseGame[] {
-	if (sort === "updated") {
-		return [...games].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-	}
-
-	return sortReleaseGames(games, sort);
-}
-
 interface GameListProps {
 	games: ReleaseGame[];
 	readOnly?: boolean;
@@ -72,7 +64,9 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 	const visibleGames = useMemo(() => {
 		const filtered =
 			tab === "ALL" ? games : games.filter((g) => g.trackedStatus === tab);
-		return sortGames(filtered, sort);
+		return sort === "updated"
+			? [...filtered].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+			: sortReleaseGames(filtered, sort);
 	}, [games, tab, sort]);
 
 	return (

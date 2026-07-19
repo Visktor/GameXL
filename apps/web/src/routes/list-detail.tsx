@@ -1,11 +1,10 @@
 import { Button } from "@GameXL/ui/components/button";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@GameXL/ui/components/select";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@GameXL/ui/components/dropdown-menu";
 import {
 	closestCenter,
 	DndContext,
@@ -21,13 +20,19 @@ import {
 } from "@dnd-kit/sortable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
-import { GlobeIcon, LockIcon, PencilIcon, Trash2 } from "lucide-react";
+import {
+	ArrowUpDownIcon,
+	GlobeIcon,
+	LockIcon,
+	PencilIcon,
+	Trash2,
+} from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, Outlet, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { DeleteListDialog } from "@/components/delete-list-dialog";
-import { ListFormDialog } from "@/components/list-form-dialog";
+import { EmptyState } from "@/components/empty-state";
 import Loader from "@/components/loader";
 import { SortableListItem } from "@/components/sortable-list-item";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
@@ -39,10 +44,9 @@ import {
 } from "@/utils/sort-release-games";
 import { trpcClient } from "@/utils/trpc";
 
-type ListSort = "manual" | ReleaseGameSort;
+const SORT_OPTIONS: ReleaseGameSort[] = ["title", "release", "score"];
 
-const SORT_LABELS: Record<ListSort, string> = {
-	manual: "Manual order",
+const SORT_LABELS: Record<ReleaseGameSort, string> = {
 	title: "Title (A-Z)",
 	release: "Release Date",
 	score: "IGDB Score",
@@ -51,9 +55,7 @@ const SORT_LABELS: Record<ListSort, string> = {
 export default function ListDetail() {
 	const { listId } = useParams<{ listId: string }>();
 	const navigate = useNavigate();
-	const [isRenameOpen, setIsRenameOpen] = useState(false);
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-	const [sort, setSort] = useState<ListSort>("manual");
 	const queryClient = useQueryClient();
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -90,26 +92,46 @@ export default function ListDetail() {
 		},
 	});
 
+	const applyOrder = (orderedIgdbIds: string[]) => {
+		if (!listQuery.data) {
+			return;
+		}
+		const itemByIgdbId = new Map(
+			listQuery.data.items.map((item) => [item.igdbId, item])
+		);
+		const newItems = orderedIgdbIds
+			.map((igdbId) => itemByIgdbId.get(igdbId))
+			.filter((item): item is (typeof listQuery.data.items)[number] =>
+				Boolean(item)
+			);
+		queryClient.setQueryData(["gameList", "get", listId], {
+			...listQuery.data,
+			items: newItems,
+		});
+		reorderMutation.mutate(orderedIgdbIds);
+	};
+
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
-		if (
-			sort !== "manual" ||
-			!(over && listQuery.data) ||
-			active.id === over.id
-		) {
+		if (!(over && listQuery.data) || active.id === over.id) {
 			return;
 		}
 
 		const items = listQuery.data.items;
 		const oldIndex = items.findIndex((item) => item.igdbId === active.id);
 		const newIndex = items.findIndex((item) => item.igdbId === over.id);
-		const newItems = arrayMove(items, oldIndex, newIndex);
+		applyOrder(arrayMove(items, oldIndex, newIndex).map((item) => item.igdbId));
+	};
 
-		queryClient.setQueryData(["gameList", "get", listId], {
-			...listQuery.data,
-			items: newItems,
-		});
-		reorderMutation.mutate(newItems.map((item) => item.igdbId));
+	const handleSortClick = (sort: ReleaseGameSort) => {
+		if (!listQuery.data) {
+			return;
+		}
+		const sorted = sortReleaseGames(
+			listQuery.data.items.map(listItemToReleaseGame),
+			sort
+		);
+		applyOrder(sorted.map((game) => game.igdbId));
 	};
 
 	if (listQuery.status === "pending") {
@@ -134,8 +156,6 @@ export default function ListDetail() {
 
 	const list = listQuery.data;
 	const releaseGames = list.items.map(listItemToReleaseGame);
-	const displayGames =
-		sort === "manual" ? releaseGames : sortReleaseGames(releaseGames, sort);
 
 	return (
 		<main className="h-full overflow-y-auto p-4">
@@ -157,7 +177,7 @@ export default function ListDetail() {
 
 					{list.isOwner && (
 						<div className="flex items-center gap-1.5">
-							<Button onClick={() => setIsRenameOpen(true)} variant="ghost">
+							<Button render={<Link to="edit" />} variant="ghost">
 								<PencilIcon className="h-4 w-4" /> Rename
 							</Button>
 							<Button
@@ -182,27 +202,27 @@ export default function ListDetail() {
 				</div>
 
 				{list.items.length === 0 ? (
-					<p className="py-12 text-center text-muted-foreground text-sm">
-						Nothing here yet.
-					</p>
+					<EmptyState>Nothing here yet.</EmptyState>
 				) : (
 					<>
 						<div className="flex justify-end">
-							<Select
-								onValueChange={(value) => setSort(value as ListSort)}
-								value={sort}
-							>
-								<SelectTrigger size="sm">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{Object.entries(SORT_LABELS).map(([value, label]) => (
-										<SelectItem key={value} value={value}>
-											{label}
-										</SelectItem>
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={<Button size="sm" variant="outline" />}
+								>
+									<ArrowUpDownIcon className="h-4 w-4" /> Sort
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									{SORT_OPTIONS.map((option) => (
+										<DropdownMenuItem
+											key={option}
+											onClick={() => handleSortClick(option)}
+										>
+											{SORT_LABELS[option]}
+										</DropdownMenuItem>
 									))}
-								</SelectContent>
-							</Select>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
 
 						<DndContext
@@ -211,13 +231,12 @@ export default function ListDetail() {
 							sensors={sensors}
 						>
 							<SortableContext
-								items={displayGames.map((game) => game.igdbId)}
+								items={releaseGames.map((game) => game.igdbId)}
 								strategy={rectSortingStrategy}
 							>
 								<div className={GAME_GRID_CLASSNAME}>
-									{displayGames.map((game) => (
+									{releaseGames.map((game) => (
 										<SortableListItem
-											dragDisabled={sort !== "manual"}
 											game={game}
 											isOwner={list.isOwner}
 											key={game.igdbId}
@@ -232,21 +251,16 @@ export default function ListDetail() {
 			</div>
 
 			{list.isOwner && (
-				<>
-					<ListFormDialog
-						list={list}
-						onOpenChange={setIsRenameOpen}
-						open={isRenameOpen}
-					/>
-					<DeleteListDialog
-						listId={list.id}
-						listName={list.name}
-						onDeleted={() => navigate("/lists")}
-						onOpenChange={setIsDeleteOpen}
-						open={isDeleteOpen}
-					/>
-				</>
+				<DeleteListDialog
+					listId={list.id}
+					listName={list.name}
+					onDeleted={() => navigate("/lists")}
+					onOpenChange={setIsDeleteOpen}
+					open={isDeleteOpen}
+				/>
 			)}
+
+			<Outlet />
 		</main>
 	);
 }

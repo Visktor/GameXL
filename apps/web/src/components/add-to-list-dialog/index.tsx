@@ -7,12 +7,15 @@ import {
 	DialogTitle,
 } from "@GameXL/ui/components/dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ListFormDialog } from "@/components/list-form-dialog";
 import Loader from "@/components/loader";
+import { useAddToListStore } from "@/stores/add-to-list-store";
 import { trpcClient } from "@/utils/trpc";
+import { AddToListRow } from "./list-row";
+
+const EMPTY_LIST_IDS: string[] = [];
 
 interface AddToListDialogProps {
 	gameData: GameData;
@@ -25,9 +28,13 @@ export function AddToListDialog({
 	onOpenChange,
 	open,
 }: AddToListDialogProps) {
-	const [addedListIds, setAddedListIds] = useState<Set<string>>(new Set());
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const queryClient = useQueryClient();
+
+	const addedListIds = useAddToListStore(
+		(state) => state.addedListIdsByGame[gameData.igdbId] ?? EMPTY_LIST_IDS
+	);
+	const markAdded = useAddToListStore((state) => state.markAdded);
 
 	const listsQuery = useQuery({
 		queryKey: ["gameList", "myLists"],
@@ -39,7 +46,7 @@ export function AddToListDialog({
 		mutationFn: (listId: string) =>
 			trpcClient.gameList.addGame.mutate({ listId, gameData }),
 		onSuccess: (_data, listId) => {
-			setAddedListIds((prev) => new Set(prev).add(listId));
+			markAdded(gameData.igdbId, listId);
 			queryClient.invalidateQueries({ queryKey: ["gameList", "get", listId] });
 		},
 		onError: () => {
@@ -49,15 +56,7 @@ export function AddToListDialog({
 
 	return (
 		<>
-			<Dialog
-				onOpenChange={(next) => {
-					if (!next) {
-						setAddedListIds(new Set());
-					}
-					onOpenChange(next);
-				}}
-				open={open}
-			>
+			<Dialog onOpenChange={onOpenChange} open={open}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Add "{gameData.title}" to a list</DialogTitle>
@@ -72,38 +71,15 @@ export function AddToListDialog({
 							</p>
 						) : (
 							<ul className="flex flex-col gap-1">
-								{listsQuery.data.map((list) => {
-									const isAdded = addedListIds.has(list.id);
-									return (
-										<li
-											className="flex items-center justify-between gap-2 py-1"
-											key={list.id}
-										>
-											<span className="text-sm">
-												{list.name}{" "}
-												<span className="text-muted-foreground">
-													({list.itemCount})
-												</span>
-											</span>
-											<Button
-												disabled={isAdded || addMutation.isPending}
-												onClick={() => addMutation.mutate(list.id)}
-												size="sm"
-												variant={isAdded ? "ghost" : "outline"}
-											>
-												{isAdded ? (
-													<>
-														<CheckIcon className="size-4" /> Added
-													</>
-												) : (
-													<>
-														<PlusIcon className="size-4" /> Add
-													</>
-												)}
-											</Button>
-										</li>
-									);
-								})}
+								{listsQuery.data.map((list) => (
+									<AddToListRow
+										isAdded={addedListIds.includes(list.id)}
+										isPending={addMutation.isPending}
+										key={list.id}
+										list={list}
+										onAdd={() => addMutation.mutate(list.id)}
+									/>
+								))}
 							</ul>
 						))}
 

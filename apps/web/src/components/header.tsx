@@ -8,7 +8,7 @@ import UserMenu from "./user-menu";
 
 const NAV_ITEMS = [
 	{ to: "/", label: "Releases", icon: HomeIcon },
-	{ to: "/list", label: "My List", icon: BookmarkIcon },
+	{ to: "/tracked", label: "Tracked", icon: BookmarkIcon },
 	{ to: "/lists", label: "My Lists", icon: ListIcon },
 	{ to: "/search", label: "Search", icon: SearchIcon },
 ] as const;
