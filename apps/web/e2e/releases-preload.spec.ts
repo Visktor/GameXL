@@ -63,6 +63,18 @@ test("prefetches upcoming release pages ahead of scroll", async ({ page }) => {
 		"high"
 	);
 
+	// The grid scrolls inside its own internal container (not the page
+	// itself), so a wheel event dispatched at the default (0, 0) cursor
+	// position never reaches it -- hover over the grid first.
+	const gridBox = await page.locator("main").boundingBox();
+	if (!gridBox) {
+		throw new Error("Could not find the releases grid container");
+	}
+	await page.mouse.move(
+		gridBox.x + gridBox.width / 2,
+		gridBox.y + gridBox.height / 2
+	);
+
 	// A small scroll -- nowhere near the true bottom of the first page --
 	// should already trigger the next-page prefetch via rangeChanged, well
 	// before the user reaches the last rendered card (unlike endReached,
@@ -70,8 +82,10 @@ test("prefetches upcoming release pages ahead of scroll", async ({ page }) => {
 	await page.mouse.wheel(0, 400);
 	await expect.poll(() => requestedOffsets).toContain(PAGE_SIZE);
 
+	// Scroll deep enough for the preloaded-ahead cards to actually mount.
 	// Cards preloaded ahead of scroll are deprioritized so they don't
 	// compete with what the user is actually looking at.
+	await page.mouse.wheel(0, 3000);
 	await expect
 		.poll(() =>
 			page.locator("a[href^='/games/'] img[fetchpriority='low']").count()
