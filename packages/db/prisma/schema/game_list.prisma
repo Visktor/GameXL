@@ -1,0 +1,31 @@
+model GameList {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  isPublic  Boolean  @default(false) @map("is_public")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items GameListItem[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("game_list")
+}
+
+model GameListItem {
+  id        String   @id @default(cuid())
+  listId    String   @map("list_id")
+  gameId    String   @map("game_id")
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  list GameList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  game Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, gameId])
+  @@index([listId])
+  @@index([gameId])
+  @@map("game_list_item")
+}

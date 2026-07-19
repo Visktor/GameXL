@@ -1,14 +1,18 @@
+import type { GameData } from "@GameXL/api/schemas/user-game.schema";
+import { Button } from "@GameXL/ui/components/button";
 import {
 	HoverCard,
 	HoverCardContent,
 	HoverCardTrigger,
 } from "@GameXL/ui/components/hover-card";
+import { ListPlusIcon } from "lucide-react";
 import { useState } from "react";
 
+import { AddToListDialog } from "@/components/add-to-list-dialog";
+import { GameStatusIconLabel } from "@/components/game-status-icon-label";
 import { StatusButtonGroup } from "@/components/status-button-group";
 import { WishlistButton } from "@/components/wishlist-button";
 import {
-	GAME_STATUS_META,
 	GAME_STATUSES_ENUM,
 	type GameStatus,
 	TRACK_STATUSES,
@@ -44,6 +48,7 @@ export function GameCard({
 }) {
 	const isList = layout === "list";
 	const [isHoverCardOpen, setIsHoverCardOpen] = useState(false);
+	const [isAddToListOpen, setIsAddToListOpen] = useState(false);
 
 	const autoplayTrailers = useAutoplayPreferenceStore(
 		(state) => state.autoplayTrailers
@@ -56,6 +61,15 @@ export function GameCard({
 		}
 		e.preventDefault();
 		openPreviewPanel(game.igdbId);
+	};
+
+	const gameData: GameData = {
+		igdbId: game.igdbId,
+		title: game.title,
+		coverUrl: game.coverUrl,
+		trailerVideoId: game.trailerVideoId,
+		releaseDate: game.releaseDate,
+		igdbScore: game.igdbScore,
 	};
 
 	const storeStatus = useTrackedGamesStore((state) =>
@@ -90,99 +104,110 @@ export function GameCard({
 	);
 
 	return (
-		<HoverCard onOpenChange={setIsHoverCardOpen}>
-			<HoverCardTrigger
-				closeDelay={150}
-				delay={300}
-				render={
-					<div
-						className={
-							isList
-								? "group flex items-center gap-3 border-b py-2 last:border-b-0"
-								: "group block"
-						}
-					/>
-				}
-			>
-				{isList ? (
-					<GameCardListBody
-						game={game}
-						imagePriority={imagePriority}
-						onCoverClick={handleCoverClick}
-					>
-						{statusRow}
-					</GameCardListBody>
-				) : (
-					<GameCardGridBody
-						game={game}
-						imagePriority={imagePriority}
-						onCoverClick={handleCoverClick}
-					>
-						{statusRow}
-					</GameCardGridBody>
-				)}
-			</HoverCardTrigger>
-			<HoverCardContent className="w-140 p-0" side="right">
-				{autoplayTrailers && (
-					<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
-				)}
-
-				{/* Scores + actions */}
-				<div className="p-3">
-					<div className="mb-3 flex items-center gap-2 text-sm">
-						<WishlistButton
-							isPending={isFavoritePending}
-							onToggle={handleToggleFavorite}
-							readOnly={readOnly}
-							trackedStatus={trackedStatus}
+		<>
+			<HoverCard onOpenChange={setIsHoverCardOpen}>
+				<HoverCardTrigger
+					closeDelay={150}
+					delay={300}
+					render={
+						<div
+							className={
+								isList
+									? "group flex items-center gap-3 border-b py-2 last:border-b-0"
+									: "group block"
+							}
 						/>
+					}
+				>
+					{isList ? (
+						<GameCardListBody
+							game={game}
+							imagePriority={imagePriority}
+							onCoverClick={handleCoverClick}
+						>
+							{statusRow}
+						</GameCardListBody>
+					) : (
+						<GameCardGridBody
+							game={game}
+							imagePriority={imagePriority}
+							onCoverClick={handleCoverClick}
+						>
+							{statusRow}
+						</GameCardGridBody>
+					)}
+				</HoverCardTrigger>
+				<HoverCardContent className="w-140 p-0" side="right">
+					{autoplayTrailers && (
+						<HoverPreviewMedia game={game} isOpen={isHoverCardOpen} />
+					)}
 
-						{game.igdbScore === null ? (
-							<span className="text-muted-foreground text-xs">
-								No IGDB score
-							</span>
-						) : (
-							<span className="text-muted-foreground">
-								IGDB{" "}
-								<span className="font-medium text-foreground">
-									{Math.round(game.igdbScore)}
-								</span>
-							</span>
-						)}
-					</div>
-
-					<div className="flex flex-wrap items-center gap-1.5">
-						{readOnly ? (
-							trackedStatus &&
-							trackedStatus !== GAME_STATUSES_ENUM.WISHLIST && (
-								<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-									{(() => {
-										const { icon: Icon, label } =
-											GAME_STATUS_META[trackedStatus];
-										return (
-											<>
-												<Icon className="h-4 w-4" />
-												{label}
-											</>
-										);
-									})()}
-								</span>
-							)
-						) : (
-							<StatusButtonGroup
-								disabled={isFavoritePending}
-								onChange={(status) =>
-									status
-										? addMutation.mutate({ game, status })
-										: removeMutation.mutate({ game })
-								}
-								statuses={TRACK_STATUSES}
-								value={trackedStatus}
+					{/* Scores + actions */}
+					<div className="p-3">
+						<div className="mb-3 flex items-center gap-2 text-sm">
+							<WishlistButton
+								isPending={isFavoritePending}
+								onToggle={handleToggleFavorite}
+								readOnly={readOnly}
+								trackedStatus={trackedStatus}
 							/>
-						)}
+
+							{game.igdbScore === null ? (
+								<span className="text-muted-foreground text-xs">
+									No IGDB score
+								</span>
+							) : (
+								<span className="text-muted-foreground">
+									IGDB{" "}
+									<span className="font-medium text-foreground">
+										{Math.round(game.igdbScore)}
+									</span>
+								</span>
+							)}
+
+							<Button
+								className="ml-auto"
+								onClick={(e) => {
+									e.preventDefault();
+									setIsAddToListOpen(true);
+								}}
+								size="icon-sm"
+								variant="ghost"
+							>
+								<ListPlusIcon className="h-4 w-4" />
+							</Button>
+						</div>
+
+						<div className="flex flex-wrap items-center gap-1.5">
+							{readOnly ? (
+								trackedStatus &&
+								trackedStatus !== GAME_STATUSES_ENUM.WISHLIST && (
+									<span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+										<GameStatusIconLabel status={trackedStatus} />
+									</span>
+								)
+							) : (
+								<StatusButtonGroup
+									disabled={isFavoritePending}
+									onChange={(status) =>
+										status
+											? addMutation.mutate({ game, status })
+											: removeMutation.mutate({ game })
+									}
+									statuses={TRACK_STATUSES}
+									value={trackedStatus}
+								/>
+							)}
+						</div>
 					</div>
-				</div>
-			</HoverCardContent>
-		</HoverCard>
+				</HoverCardContent>
+			</HoverCard>
+
+			<AddToListDialog
+				gameData={gameData}
+				onOpenChange={setIsAddToListOpen}
+				open={isAddToListOpen}
+			/>
+		</>
 	);
 }

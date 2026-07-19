@@ -1,5 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { gameRouter } from "./game";
+import { gameListRouter } from "./game-list";
 import { guestSessionRouter } from "./guest-session";
 import { releasesRouter } from "./releases";
 import { searchRouter } from "./search";
@@ -17,6 +18,7 @@ export const appRouter = router({
 		};
 	}),
 	game: gameRouter,
+	gameList: gameListRouter,
 	guestSession: guestSessionRouter,
 	releases: releasesRouter,
 	search: searchRouter,

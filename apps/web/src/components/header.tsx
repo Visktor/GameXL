@@ -1,5 +1,5 @@
 import { cn } from "@GameXL/ui/lib/utils";
-import { BookmarkIcon, HomeIcon, SearchIcon } from "lucide-react";
+import { BookmarkIcon, HomeIcon, ListIcon, SearchIcon } from "lucide-react";
 import { NavLink } from "react-router";
 
 import { AutoplayToggle } from "./autoplay-toggle";
@@ -9,6 +9,7 @@ import UserMenu from "./user-menu";
 const NAV_ITEMS = [
 	{ to: "/", label: "Releases", icon: HomeIcon },
 	{ to: "/list", label: "My List", icon: BookmarkIcon },
+	{ to: "/lists", label: "My Lists", icon: ListIcon },
 	{ to: "/search", label: "Search", icon: SearchIcon },
 ] as const;
 

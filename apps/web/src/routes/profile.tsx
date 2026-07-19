@@ -3,6 +3,7 @@ import { TRPCClientError } from "@trpc/client";
 import { useParams } from "react-router";
 
 import { GameList } from "@/components/game-list";
+import { GameListCard } from "@/components/game-list-card";
 import Loader from "@/components/loader";
 import { authClient } from "@/lib/auth-client";
 import { NotFoundError } from "@/utils/errors";
@@ -24,6 +25,13 @@ export default function Profile() {
 		queryKey: ["userGame", "listByUsername", username],
 		queryFn: () =>
 			trpcClient.userGame.listByUsername.query({ username: username ?? "" }),
+		enabled: Boolean(username),
+	});
+
+	const listsQuery = useQuery({
+		queryKey: ["gameList", "listByUsername", username],
+		queryFn: () =>
+			trpcClient.gameList.listByUsername.query({ username: username ?? "" }),
 		enabled: Boolean(username),
 	});
 
@@ -97,6 +105,24 @@ export default function Profile() {
 					games={gamesQuery.data.map(toReleaseGame)}
 					readOnly={!isOwnProfile}
 				/>
+
+				{listsQuery.status === "success" &&
+					(isOwnProfile || listsQuery.data.length > 0) && (
+						<div className="flex flex-col gap-4">
+							<h2 className="font-semibold text-xl">Public Lists</h2>
+							{listsQuery.data.length === 0 ? (
+								<p className="text-muted-foreground text-sm">
+									No public lists yet.
+								</p>
+							) : (
+								<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+									{listsQuery.data.map((list) => (
+										<GameListCard key={list.id} list={list} readOnly />
+									))}
+								</div>
+							)}
+						</div>
+					)}
 			</div>
 		</main>
 	);

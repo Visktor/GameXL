@@ -14,6 +14,8 @@ import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import GameDetails from "./routes/game-details";
 import MyList from "./routes/list";
+import ListDetail from "./routes/list-detail";
+import Lists from "./routes/lists";
 import Login from "./routes/login/login";
 import Profile from "./routes/profile";
 import Search from "./routes/search";
@@ -66,6 +68,8 @@ const router = createBrowserRouter([
 			{ path: "/search", element: <Search /> },
 			{ path: "/games/:igdbId", element: <GameDetails /> },
 			{ path: "/list", element: <MyList /> },
+			{ path: "/lists", element: <Lists /> },
+			{ path: "/lists/:listId", element: <ListDetail /> },
 			{ path: "/u/:username", element: <Profile /> },
 		],
 	},
