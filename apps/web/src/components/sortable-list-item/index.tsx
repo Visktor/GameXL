@@ -51,10 +51,10 @@ export function SortableListItem({
 			}}
 		>
 			{isOwner && (
-				<div className="absolute inset-x-0 top-0 z-[60] flex justify-between p-1">
+				<div className="pointer-events-none absolute inset-x-0 top-0 z-[60] flex justify-between p-1">
 					<Button
 						aria-label="Drag to reorder"
-						className="cursor-grab touch-none active:cursor-grabbing"
+						className="pointer-events-auto cursor-grab touch-none active:cursor-grabbing"
 						size="icon-xs"
 						variant="secondary"
 						{...attributes}
@@ -64,6 +64,7 @@ export function SortableListItem({
 					</Button>
 					<Button
 						aria-label="Remove from list"
+						className="pointer-events-auto"
 						disabled={removeMutation.isPending}
 						onClick={() => removeMutation.mutate()}
 						size="icon-xs"
