@@ -2,6 +2,7 @@ import { TRPCClientError } from "@trpc/client";
 import { useState } from "react";
 import { useParams } from "react-router";
 
+import { GameCard } from "@/components/game-card";
 import { ImageLightbox } from "@/components/image-lightbox";
 import Loader from "@/components/loader";
 import { ScreenshotGrid } from "@/components/screenshot-grid";
@@ -198,6 +199,19 @@ export default function GameDetails() {
 					screenshots={data.screenshots}
 					title={data.title}
 				/>
+
+				{data.similarGames.length > 0 && (
+					<div className="flex flex-col gap-2">
+						<h2 className="font-semibold text-lg">Similar Games</h2>
+						<div className="flex gap-4 overflow-x-auto pb-2">
+							{data.similarGames.map((similarGame) => (
+								<div className="w-36 shrink-0 sm:w-40" key={similarGame.igdbId}>
+									<GameCard game={similarGame} imagePriority="low" />
+								</div>
+							))}
+						</div>
+					</div>
+				)}
 			</div>
 
 			<ImageLightbox

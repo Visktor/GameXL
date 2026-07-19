@@ -18,6 +18,7 @@ export interface IGDBGame {
 	platforms?: { name: string }[];
 	rating?: number;
 	screenshots?: { url: string }[];
+	similar_games?: IGDBGame[];
 	summary?: string;
 	videos?: { name?: string; video_id: string }[];
 }
