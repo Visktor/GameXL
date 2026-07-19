@@ -56,9 +56,9 @@ export default function UserMenu() {
 						</DropdownMenuItem>
 						<DropdownMenuItem
 							className="rounded-lg"
-							render={<Link to="/list" />}
+							render={<Link to="/tracked" />}
 						>
-							My List
+							Tracked
 						</DropdownMenuItem>
 						{username && (
 							<DropdownMenuItem

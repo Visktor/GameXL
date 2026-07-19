@@ -1,6 +1,7 @@
 import db from "@GameXL/db";
 import { TRPCError } from "@trpc/server";
 import type { Context } from "../context";
+import { extractYoutubeVideoId } from "../lib/youtube";
 import type { GameData, GameStatus } from "../schemas/user-game.schema";
 
 interface TrackGameInput {
@@ -17,20 +18,6 @@ export interface TrackedGameEntry {
 	title: string;
 	trailerVideoId: string | null;
 	updatedAt: number;
-}
-
-const YOUTUBE_WATCH_ID_PARAM = "v";
-
-function extractYoutubeVideoId(trailerUrl: string | null): string | null {
-	if (!trailerUrl) {
-		return null;
-	}
-
-	try {
-		return new URL(trailerUrl).searchParams.get(YOUTUBE_WATCH_ID_PARAM);
-	} catch {
-		return null;
-	}
 }
 
 const trackedGameSelect = {

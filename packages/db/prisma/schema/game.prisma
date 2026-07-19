@@ -11,8 +11,9 @@ model Game {
 
   genres    Genre[]
   platforms Platform[]
-  userGames UserGame[]
-  reviews   Review[]
+  userGames     UserGame[]
+  reviews       Review[]
+  gameListItems GameListItem[]
 
   @@map("game")
 }

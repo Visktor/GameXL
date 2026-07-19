@@ -1,6 +1,6 @@
 import { DEFAULT_PAGE_SIZE } from "@GameXL/api/utils/pagination";
 import { Skeleton } from "@GameXL/ui/components/skeleton";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { type ListRange, Virtuoso, VirtuosoGrid } from "react-virtuoso";
 
 import { GameCard, type ReleaseGame } from "@/components/game-card";
@@ -80,10 +80,31 @@ export function GameListView({
 		}
 	}, [games]);
 
-	const handleEndReached = () => {
-		if (hasNextPage && !isFetchingNextPage) {
-			fetchNextPage();
+	// Virtuoso can call rangeChanged (and, on fast scrolls, both rangeChanged
+	// and endReached) more than once before React re-renders with the updated
+	// isFetchingNextPage prop, so a plain `!isFetchingNextPage` check race
+	// -- two calls can both see it as false and each fire fetchNextPage(),
+	// sending duplicate requests for the same page. A ref flips synchronously
+	// (no render round-trip needed) so the second call always sees the first
+	// call's in-flight state.
+	const isRequestingNextPageRef = useRef(false);
+
+	useEffect(() => {
+		if (!isFetchingNextPage) {
+			isRequestingNextPageRef.current = false;
 		}
+	}, [isFetchingNextPage]);
+
+	const requestNextPage = () => {
+		if (!hasNextPage || isRequestingNextPageRef.current) {
+			return;
+		}
+		isRequestingNextPageRef.current = true;
+		fetchNextPage();
+	};
+
+	const handleEndReached = () => {
+		requestNextPage();
 	};
 
 	// Fires well before endReached (which only accounts for render overscan):
@@ -91,12 +112,8 @@ export function GameListView({
 	// the next page so fast/fling scrolling doesn't outrun the network.
 	const handleRangeChanged = ({ endIndex }: ListRange) => {
 		const itemsRemaining = games.length - endIndex;
-		if (
-			itemsRemaining <= DEFAULT_PAGE_SIZE &&
-			hasNextPage &&
-			!isFetchingNextPage
-		) {
-			fetchNextPage();
+		if (itemsRemaining <= DEFAULT_PAGE_SIZE) {
+			requestNextPage();
 		}
 	};
 

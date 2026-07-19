@@ -56,7 +56,7 @@ test("clicking the wishlist button on a search result quick-adds it", async ({
 	});
 
 	const row = page.getByRole("option", { name: HOLLOW_KNIGHT_NAME });
-	await row.getByRole("button", { name: "Add to wishlist" }).click();
+	await row.getByRole("button", { name: "Wishlist" }).click();
 
 	await expect
 		.poll(() => trackedInput)
@@ -64,9 +64,7 @@ test("clicking the wishlist button on a search result quick-adds it", async ({
 			gameData: { igdbId: "1", title: "Hollow Knight" },
 			status: "WISHLIST",
 		});
-	await expect(
-		row.getByRole("button", { name: "Remove from wishlist" })
-	).toBeVisible();
+	await expect(row.getByRole("button", { name: "Wishlisted" })).toBeVisible();
 });
 
 test("clicking the wishlist button again removes it", async ({ page }) => {
@@ -79,12 +77,10 @@ test("clicking the wishlist button again removes it", async ({ page }) => {
 	});
 
 	const row = page.getByRole("option", { name: HOLLOW_KNIGHT_NAME });
-	await row.getByRole("button", { name: "Remove from wishlist" }).click();
+	await row.getByRole("button", { name: "Wishlisted" }).click();
 
 	await expect.poll(() => removeCalled).toBe(true);
-	await expect(
-		row.getByRole("button", { name: "Add to wishlist" })
-	).toBeVisible();
+	await expect(row.getByRole("button", { name: "Wishlist" })).toBeVisible();
 });
 
 test("Cmd+Enter quick-adds the highlighted result to the wishlist", async ({

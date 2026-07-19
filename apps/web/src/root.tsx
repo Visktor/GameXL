@@ -13,10 +13,14 @@ import { SearchCommandDialog } from "./components/search-command-dialog";
 import { ThemeProvider } from "./components/theme-provider";
 import Home from "./routes/_index";
 import GameDetails from "./routes/game-details";
-import MyList from "./routes/list";
+import ListDetail from "./routes/list-detail";
+import ListEdit from "./routes/list-edit";
+import ListNew from "./routes/list-new";
+import Lists from "./routes/lists";
 import Login from "./routes/login/login";
 import Profile from "./routes/profile";
 import Search from "./routes/search";
+import Tracked from "./routes/tracked";
 import { useSessionStore } from "./stores/session-store";
 import { queryClient } from "./utils/trpc";
 
@@ -65,7 +69,17 @@ const router = createBrowserRouter([
 			{ path: "/login", element: <Login /> },
 			{ path: "/search", element: <Search /> },
 			{ path: "/games/:igdbId", element: <GameDetails /> },
-			{ path: "/list", element: <MyList /> },
+			{ path: "/tracked", element: <Tracked /> },
+			{
+				path: "/lists",
+				element: <Lists />,
+				children: [{ path: "new", element: <ListNew /> }],
+			},
+			{
+				path: "/lists/:listId",
+				element: <ListDetail />,
+				children: [{ path: "edit", element: <ListEdit /> }],
+			},
 			{ path: "/u/:username", element: <Profile /> },
 		],
 	},

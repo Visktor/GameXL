@@ -12,6 +12,7 @@ model User {
   accounts        Account[]
   userGames       UserGame[]
   reviews         Review[]
+  gameLists       GameList[]
 
   @@unique([email])
   @@unique([username])
