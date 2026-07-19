@@ -153,3 +153,61 @@ test("list detail page renders items and removes one from the list", async ({
 		.poll(() => removeInput)
 		.toMatchObject({ listId: "list-1", igdbId: "1" });
 });
+
+test("sorting a list by title reorders it and disables dragging", async ({
+	page,
+}) => {
+	await page.route("**/api/auth/get-session**", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				user: SESSION_USER,
+				session: { id: "session-1", userId: SESSION_USER.id },
+			}),
+		})
+	);
+
+	const items = [
+		{
+			igdbId: "2",
+			title: "Hollow Knight",
+			coverUrl: null,
+			trailerVideoId: null,
+			releaseDate: null,
+			igdbScore: 88,
+			trackedStatus: null,
+		},
+		{
+			igdbId: "1",
+			title: "Disco Elysium",
+			coverUrl: null,
+			trailerVideoId: null,
+			releaseDate: null,
+			igdbScore: 92,
+			trackedStatus: null,
+		},
+	];
+
+	await mockTrpcProcedure(page, "gameList.get", () => ({
+		...buildList({ itemCount: items.length }),
+		isOwner: true,
+		items,
+	}));
+
+	await page.goto("/lists/list-1");
+
+	const titles = page.locator("p.truncate");
+	await expect(titles).toHaveText(["Hollow Knight", "Disco Elysium"]);
+	await expect(
+		page.getByRole("button", { name: "Drag to reorder" })
+	).toHaveCount(2);
+
+	await page.getByRole("combobox").click();
+	await page.getByRole("option", { name: "Title (A-Z)" }).click();
+
+	await expect(titles).toHaveText(["Disco Elysium", "Hollow Knight"]);
+	await expect(
+		page.getByRole("button", { name: "Drag to reorder" })
+	).toHaveCount(0);
+});

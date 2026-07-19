@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import type { ReleaseGame } from "@/components/game-card";
 import { GameListView } from "@/components/game-list-view";
 import { GAME_STATUS_META, GAME_STATUSES } from "@/constants/game-status";
+import { sortReleaseGames } from "@/utils/sort-release-games";
 
 // GameList's data is a fully-loaded, non-paginated array — nothing to fetch.
 const NO_OP = () => undefined;
@@ -35,23 +36,11 @@ const SORT_LABELS: Record<SortOption, string> = {
 };
 
 function sortGames(games: ReleaseGame[], sort: SortOption): ReleaseGame[] {
-	const sorted = [...games];
-
-	switch (sort) {
-		case "title":
-			sorted.sort((a, b) => a.title.localeCompare(b.title));
-			break;
-		case "release":
-			sorted.sort((a, b) => (b.releaseDate ?? 0) - (a.releaseDate ?? 0));
-			break;
-		case "score":
-			sorted.sort((a, b) => (b.igdbScore ?? 0) - (a.igdbScore ?? 0));
-			break;
-		default:
-			sorted.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+	if (sort === "updated") {
+		return [...games].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 	}
 
-	return sorted;
+	return sortReleaseGames(games, sort);
 }
 
 interface GameListProps {

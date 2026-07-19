@@ -1,5 +1,12 @@
 import { Button } from "@GameXL/ui/components/button";
 import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@GameXL/ui/components/select";
+import {
 	closestCenter,
 	DndContext,
 	type DragEndEvent,
@@ -26,13 +33,27 @@ import { SortableListItem } from "@/components/sortable-list-item";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
 import { NotFoundError } from "@/utils/errors";
 import { listItemToReleaseGame } from "@/utils/game-list-item";
+import {
+	type ReleaseGameSort,
+	sortReleaseGames,
+} from "@/utils/sort-release-games";
 import { trpcClient } from "@/utils/trpc";
+
+type ListSort = "manual" | ReleaseGameSort;
+
+const SORT_LABELS: Record<ListSort, string> = {
+	manual: "Manual order",
+	title: "Title (A-Z)",
+	release: "Release Date",
+	score: "IGDB Score",
+};
 
 export default function ListDetail() {
 	const { listId } = useParams<{ listId: string }>();
 	const navigate = useNavigate();
 	const [isRenameOpen, setIsRenameOpen] = useState(false);
 	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [sort, setSort] = useState<ListSort>("manual");
 	const queryClient = useQueryClient();
 	const sensors = useSensors(useSensor(PointerSensor));
 
@@ -71,7 +92,11 @@ export default function ListDetail() {
 
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
-		if (!(over && listQuery.data) || active.id === over.id) {
+		if (
+			sort !== "manual" ||
+			!(over && listQuery.data) ||
+			active.id === over.id
+		) {
 			return;
 		}
 
@@ -108,6 +133,9 @@ export default function ListDetail() {
 	}
 
 	const list = listQuery.data;
+	const releaseGames = list.items.map(listItemToReleaseGame);
+	const displayGames =
+		sort === "manual" ? releaseGames : sortReleaseGames(releaseGames, sort);
 
 	return (
 		<main className="h-full overflow-y-auto p-4">
@@ -158,27 +186,48 @@ export default function ListDetail() {
 						Nothing here yet.
 					</p>
 				) : (
-					<DndContext
-						collisionDetection={closestCenter}
-						onDragEnd={handleDragEnd}
-						sensors={sensors}
-					>
-						<SortableContext
-							items={list.items.map((item) => item.igdbId)}
-							strategy={rectSortingStrategy}
+					<>
+						<div className="flex justify-end">
+							<Select
+								onValueChange={(value) => setSort(value as ListSort)}
+								value={sort}
+							>
+								<SelectTrigger size="sm">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.entries(SORT_LABELS).map(([value, label]) => (
+										<SelectItem key={value} value={value}>
+											{label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+
+						<DndContext
+							collisionDetection={closestCenter}
+							onDragEnd={handleDragEnd}
+							sensors={sensors}
 						>
-							<div className={GAME_GRID_CLASSNAME}>
-								{list.items.map((item) => (
-									<SortableListItem
-										game={listItemToReleaseGame(item)}
-										isOwner={list.isOwner}
-										key={item.igdbId}
-										listId={listId}
-									/>
-								))}
-							</div>
-						</SortableContext>
-					</DndContext>
+							<SortableContext
+								items={displayGames.map((game) => game.igdbId)}
+								strategy={rectSortingStrategy}
+							>
+								<div className={GAME_GRID_CLASSNAME}>
+									{displayGames.map((game) => (
+										<SortableListItem
+											dragDisabled={sort !== "manual"}
+											game={game}
+											isOwner={list.isOwner}
+											key={game.igdbId}
+											listId={listId}
+										/>
+									))}
+								</div>
+							</SortableContext>
+						</DndContext>
+					</>
 				)}
 			</div>
 
