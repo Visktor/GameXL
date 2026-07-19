@@ -5,15 +5,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@GameXL/ui/components/select";
+import { type SearchSortBy, SORT_OPTIONS } from "@/constants/search-sort";
 
-const SORT_OPTIONS = [
-	{ value: "popularity", label: "Popularity" },
-	{ value: "rating", label: "Rating" },
-	{ value: "recent", label: "Recently added" },
-	{ value: "az", label: "A–Z" },
-] as const;
-
-export type SearchSortBy = (typeof SORT_OPTIONS)[number]["value"];
+export type { SearchSortBy } from "@/constants/search-sort";
 
 export function SearchSortSelect({
 	onChange,

@@ -5,7 +5,7 @@ import {
 	searchQuerySchema,
 	searchSortBySchema,
 } from "../schemas/search.schema";
-import { listGenres, searchGames } from "../services/search.service";
+import { SearchService } from "../services/search.service";
 import { paginationInput } from "../utils/pagination";
 
 export const searchRouter = router({
@@ -20,6 +20,6 @@ export const searchRouter = router({
 				sortBy: searchSortBySchema.default("popularity"),
 			})
 		)
-		.query(searchGames),
-	genres: publicProcedure.query(() => listGenres()),
+		.query(SearchService.searchGames),
+	genres: publicProcedure.query(() => SearchService.listGenres()),
 });

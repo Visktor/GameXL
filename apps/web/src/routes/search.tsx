@@ -11,55 +11,15 @@ import type { SearchSortBy } from "@/components/search-sort-select";
 import { SearchSortSelect } from "@/components/search-sort-select";
 import { SearchTrendingSection } from "@/components/search-trending-section";
 import { RATING_SCALE } from "@/constants/rating";
+import { SearchParamsUtils } from "@/utils/search-params";
 import { trpcClient } from "@/utils/trpc";
 
-const SEARCH_MODES = [
+type SearchMode = "contains" | "fulltext";
+
+const SEARCH_MODES: { key: SearchMode; label: string }[] = [
 	{ key: "contains", label: "Contains" },
 	{ key: "fulltext", label: "Full text" },
-] as const;
-
-type SearchMode = (typeof SEARCH_MODES)[number]["key"];
-
-function parseGenres(raw: string | null): string[] {
-	return raw ? raw.split(",").filter(Boolean) : [];
-}
-
-function parseRatingStars(raw: string | null): number {
-	const parsed = Number(raw ?? "0");
-	return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function buildParams({
-	genres,
-	mode,
-	q,
-	ratingStars,
-	sortBy,
-}: {
-	genres: string[];
-	mode: SearchMode;
-	q: string;
-	ratingStars: number;
-	sortBy: SearchSortBy;
-}): Record<string, string> {
-	const params: Record<string, string> = {};
-	if (q) {
-		params.q = q;
-	}
-	if (mode !== "contains") {
-		params.mode = mode;
-	}
-	if (genres.length > 0) {
-		params.genres = genres.join(",");
-	}
-	if (ratingStars > 0) {
-		params.rating = String(ratingStars);
-	}
-	if (sortBy !== "popularity") {
-		params.sortBy = sortBy;
-	}
-	return params;
-}
+];
 
 export default function SearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -68,8 +28,10 @@ export default function SearchPage() {
 	const q = searchParams.get("q") ?? "";
 	const mode: SearchMode = (searchParams.get("mode") ??
 		"contains") as SearchMode;
-	const genres = parseGenres(searchParams.get("genres"));
-	const ratingStars = parseRatingStars(searchParams.get("rating"));
+	const genres = SearchParamsUtils.parseGenres(searchParams.get("genres"));
+	const ratingStars = SearchParamsUtils.parseRatingStars(
+		searchParams.get("rating")
+	);
 	const sortBy: SearchSortBy = (searchParams.get("sortBy") ??
 		"popularity") as SearchSortBy;
 
@@ -87,14 +49,27 @@ export default function SearchPage() {
 		}>
 	) => {
 		setSearchParams(
-			buildParams({ q, mode, genres, ratingStars, sortBy, ...partial })
+			SearchParamsUtils.buildSearchParams({
+				q,
+				mode,
+				genres,
+				ratingStars,
+				sortBy,
+				...partial,
+			})
 		);
 	};
 
 	const handleClearFilters = () => {
 		setClearSignal((n) => n + 1);
 		setSearchParams(
-			buildParams({ q: "", mode, genres: [], ratingStars: 0, sortBy })
+			SearchParamsUtils.buildSearchParams({
+				q: "",
+				mode,
+				genres: [],
+				ratingStars: 0,
+				sortBy,
+			})
 		);
 	};
 
