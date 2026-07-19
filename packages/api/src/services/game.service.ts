@@ -25,7 +25,8 @@ export async function getGameById({
 		igdbGames = await queryIGDB<IGDBGame[]>(
 			"games",
 			`fields id, name, cover.url, first_release_date, rating, videos.video_id, videos.name,
-			 summary, genres.name, platforms.name, screenshots.url, involved_companies.company.name, involved_companies.developer;
+			 summary, genres.name, platforms.name, screenshots.url, involved_companies.company.name, involved_companies.developer,
+			 similar_games.name, similar_games.cover.url, similar_games.first_release_date, similar_games.rating, similar_games.videos.video_id, similar_games.videos.name;
 			 where id = ${Number(input.igdbId)};`
 		);
 	} catch (err) {
@@ -54,6 +55,11 @@ export async function getGameById({
 		});
 	}
 
+	const similarGames = await mapIgdbGamesWithTrackedStatus(
+		igdbGame.similar_games ?? [],
+		ctx
+	);
+
 	return {
 		...game,
 		summary: igdbGame.summary ?? null,
@@ -61,6 +67,7 @@ export async function getGameById({
 		genres: igdbGame.genres?.map((g) => g.name) ?? [],
 		platforms: igdbGame.platforms?.map((p) => p.name) ?? [],
 		screenshots: resolveScreenshotUrls(igdbGame),
+		similarGames,
 	};
 }
 
