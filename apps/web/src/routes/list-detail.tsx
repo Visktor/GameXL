@@ -1,3 +1,4 @@
+import type { GameListItemEntry } from "@GameXL/api/services/game-list.service";
 import { Button } from "@GameXL/ui/components/button";
 import {
 	DropdownMenu,
@@ -27,7 +28,7 @@ import {
 	PencilIcon,
 	Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, Outlet, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ import { EmptyState } from "@/components/empty-state";
 import Loader from "@/components/loader";
 import { SortableListItem } from "@/components/sortable-list-item";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
+import { LIST_SORT_LABELS, LIST_SORT_OPTIONS } from "@/constants/list-sort";
 import { NotFoundError } from "@/utils/errors";
 import { listItemToReleaseGame } from "@/utils/game-list-item";
 import {
@@ -44,13 +46,15 @@ import {
 } from "@/utils/sort-release-games";
 import { trpcClient } from "@/utils/trpc";
 
-const SORT_OPTIONS: ReleaseGameSort[] = ["title", "release", "score"];
-
-const SORT_LABELS: Record<ReleaseGameSort, string> = {
-	title: "Title (A-Z)",
-	release: "Release Date",
-	score: "IGDB Score",
-};
+function reorderItemsById(
+	items: GameListItemEntry[],
+	orderedIgdbIds: string[]
+): GameListItemEntry[] {
+	const itemByIgdbId = new Map(items.map((item) => [item.igdbId, item]));
+	return orderedIgdbIds
+		.map((igdbId) => itemByIgdbId.get(igdbId))
+		.filter((item): item is GameListItemEntry => Boolean(item));
+}
 
 export default function ListDetail() {
 	const { listId } = useParams<{ listId: string }>();
@@ -92,47 +96,55 @@ export default function ListDetail() {
 		},
 	});
 
-	const applyOrder = (orderedIgdbIds: string[]) => {
-		if (!listQuery.data) {
-			return;
-		}
-		const itemByIgdbId = new Map(
-			listQuery.data.items.map((item) => [item.igdbId, item])
-		);
-		const newItems = orderedIgdbIds
-			.map((igdbId) => itemByIgdbId.get(igdbId))
-			.filter((item): item is (typeof listQuery.data.items)[number] =>
-				Boolean(item)
+	const applyOrder = useCallback(
+		(orderedIgdbIds: string[]) => {
+			if (!listQuery.data) {
+				return;
+			}
+			const reorderedItems = reorderItemsById(
+				listQuery.data.items,
+				orderedIgdbIds
 			);
-		queryClient.setQueryData(["gameList", "get", listId], {
-			...listQuery.data,
-			items: newItems,
-		});
-		reorderMutation.mutate(orderedIgdbIds);
-	};
+			queryClient.setQueryData(["gameList", "get", listId], {
+				...listQuery.data,
+				items: reorderedItems,
+			});
+			reorderMutation.mutate(orderedIgdbIds);
+		},
+		[listQuery.data, queryClient, listId, reorderMutation]
+	);
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
-		if (!(over && listQuery.data) || active.id === over.id) {
-			return;
-		}
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent) => {
+			const { active, over } = event;
+			if (!(over && listQuery.data) || active.id === over.id) {
+				return;
+			}
 
-		const items = listQuery.data.items;
-		const oldIndex = items.findIndex((item) => item.igdbId === active.id);
-		const newIndex = items.findIndex((item) => item.igdbId === over.id);
-		applyOrder(arrayMove(items, oldIndex, newIndex).map((item) => item.igdbId));
-	};
+			const items = listQuery.data.items;
+			const oldIndex = items.findIndex((item) => item.igdbId === active.id);
+			const newIndex = items.findIndex((item) => item.igdbId === over.id);
+			const draggedOrder = arrayMove(items, oldIndex, newIndex).map(
+				(item) => item.igdbId
+			);
+			applyOrder(draggedOrder);
+		},
+		[listQuery.data, applyOrder]
+	);
 
-	const handleSortClick = (sort: ReleaseGameSort) => {
-		if (!listQuery.data) {
-			return;
-		}
-		const sorted = sortReleaseGames(
-			listQuery.data.items.map(listItemToReleaseGame),
-			sort
-		);
-		applyOrder(sorted.map((game) => game.igdbId));
-	};
+	const handleSortClick = useCallback(
+		(sort: ReleaseGameSort) => {
+			if (!listQuery.data) {
+				return;
+			}
+			const releaseGames = listQuery.data.items.map(listItemToReleaseGame);
+			const sortedOrder = sortReleaseGames(releaseGames, sort).map(
+				(game) => game.igdbId
+			);
+			applyOrder(sortedOrder);
+		},
+		[listQuery.data, applyOrder]
+	);
 
 	if (listQuery.status === "pending") {
 		return <Loader />;
@@ -213,12 +225,12 @@ export default function ListDetail() {
 									<ArrowUpDownIcon className="h-4 w-4" /> Sort
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="end">
-									{SORT_OPTIONS.map((option) => (
+									{LIST_SORT_OPTIONS.map((option) => (
 										<DropdownMenuItem
 											key={option}
 											onClick={() => handleSortClick(option)}
 										>
-											{SORT_LABELS[option]}
+											{LIST_SORT_LABELS[option]}
 										</DropdownMenuItem>
 									))}
 								</DropdownMenuContent>
