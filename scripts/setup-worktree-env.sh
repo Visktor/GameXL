@@ -31,15 +31,21 @@ if [ "$main_root" = "$worktree_path" ]; then
 	exit 1
 fi
 
-web_env_main="$main_root/apps/web/.env.development"
+# Web is read both by `vite dev` (mode "development" -> .env.development) and
+# by Vitest (mode "test" -> plain .env, which Vite always loads regardless of
+# mode) — both need to exist and both need their PORT/VITE_SERVER_URL patched,
+# or `vitest run` fails with "Invalid environment variables" in a fresh worktree.
+web_env_dev_main="$main_root/apps/web/.env.development"
+web_env_plain_main="$main_root/apps/web/.env"
 server_env_main="$main_root/apps/server/.env.development"
 native_env_main="$main_root/apps/native/.env"
 
-web_env_wt="$worktree_path/apps/web/.env.development"
+web_env_dev_wt="$worktree_path/apps/web/.env.development"
+web_env_plain_wt="$worktree_path/apps/web/.env"
 server_env_wt="$worktree_path/apps/server/.env.development"
 native_env_wt="$worktree_path/apps/native/.env"
 
-for pair in "$web_env_main:$web_env_wt" "$server_env_main:$server_env_wt" "$native_env_main:$native_env_wt"; do
+for pair in "$web_env_dev_main:$web_env_dev_wt" "$web_env_plain_main:$web_env_plain_wt" "$server_env_main:$server_env_wt" "$native_env_main:$native_env_wt"; do
 	src="${pair%%:*}"
 	dest="${pair##*:}"
 	if [ -f "$src" ]; then
@@ -51,16 +57,18 @@ done
 web_port="$("$FIND_FREE_PORT" "$WEB_BASE_PORT")"
 server_port="$("$FIND_FREE_PORT" "$SERVER_BASE_PORT")"
 
-if [ -f "$web_env_wt" ]; then
-	if grep -q "^PORT=" "$web_env_wt"; then
-		sed -i '' "s/^PORT=.*/PORT=${web_port}/" "$web_env_wt"
-	else
-		echo "PORT=${web_port}" >>"$web_env_wt"
+for web_env_wt in "$web_env_dev_wt" "$web_env_plain_wt"; do
+	if [ -f "$web_env_wt" ]; then
+		if grep -q "^PORT=" "$web_env_wt"; then
+			sed -i '' "s/^PORT=.*/PORT=${web_port}/" "$web_env_wt"
+		else
+			echo "PORT=${web_port}" >>"$web_env_wt"
+		fi
+		if grep -q "^VITE_SERVER_URL=" "$web_env_wt"; then
+			sed -i '' "s#^VITE_SERVER_URL=.*#VITE_SERVER_URL=http://localhost:${server_port}#" "$web_env_wt"
+		fi
 	fi
-	if grep -q "^VITE_SERVER_URL=" "$web_env_wt"; then
-		sed -i '' "s#^VITE_SERVER_URL=.*#VITE_SERVER_URL=http://localhost:${server_port}#" "$web_env_wt"
-	fi
-fi
+done
 
 if [ -f "$server_env_wt" ]; then
 	if grep -q "^PORT=" "$server_env_wt"; then
