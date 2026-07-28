@@ -23,8 +23,8 @@ vi.mock("@/components/status-select", () => ({
 }));
 
 const SERVER_URL = "http://localhost:3000";
-const WISHLIST_BUTTON_NAME = /add to wishlist/i;
-const REMOVE_BUTTON_NAME = /remove from wishlist/i;
+const WISHLIST_BUTTON_NAME = /^wishlist$/i;
+const REMOVE_BUTTON_NAME = /^wishlisted$/i;
 
 function renderRow(game: ReleaseGame): ReturnType<typeof render> {
 	const queryClient = new QueryClient();

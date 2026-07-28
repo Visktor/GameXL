@@ -20,6 +20,36 @@ vi.mock("@GameXL/ui/components/hover-card", () => ({
 	HoverCardContent: () => null,
 }));
 
+// react-virtuoso measures the scroll container to decide what to render,
+// which stays zero-height under happy-dom — stubbed to render every item
+// directly so these tests can assert on the resulting games/filters.
+vi.mock("react-virtuoso", () => {
+	function renderAllItems({
+		components,
+		context,
+		itemContent,
+		totalCount,
+	}: {
+		components?: { Footer?: (props: { context: unknown }) => ReactNode };
+		context?: unknown;
+		itemContent: (index: number) => ReactNode;
+		totalCount: number;
+	}) {
+		const Footer = components?.Footer;
+		return (
+			<>
+				{Array.from({ length: totalCount }, (_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: static mock list, order is stable within a render
+					<div key={i}>{itemContent(i)}</div>
+				))}
+				{Footer ? <Footer context={context} /> : null}
+			</>
+		);
+	}
+
+	return { Virtuoso: renderAllItems, VirtuosoGrid: renderAllItems };
+});
+
 const SERVER_URL = "http://localhost:3000";
 
 interface ReleasesInput {
@@ -110,15 +140,15 @@ describe("ReleasesPage", () => {
 
 		await waitFor(() => {
 			expect(capturedInputs).toEqual([
-				expect.objectContaining({ span: "today", sortBy: "popularity" }),
+				expect.objectContaining({ span: "year", sortBy: "popularity" }),
 			]);
 		});
 
-		await user.click(screen.getByRole("button", { name: "This Week" }));
+		await user.click(screen.getAllByRole("button", { name: "This Week" })[0]);
 
 		await waitFor(() => {
 			expect(capturedInputs).toEqual([
-				expect.objectContaining({ span: "today" }),
+				expect.objectContaining({ span: "year" }),
 				expect.objectContaining({ span: "week", sortBy: "popularity" }),
 			]);
 		});

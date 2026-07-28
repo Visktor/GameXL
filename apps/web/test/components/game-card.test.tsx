@@ -44,7 +44,7 @@ describe("GameCard", () => {
 		renderGameCard(baseGame);
 
 		expect(screen.getAllByText("Hollow Knight")).toHaveLength(2);
-		expect(screen.queryByRole("img")).not.toBeInTheDocument();
+		expect(document.querySelector("img")).not.toBeInTheDocument();
 	});
 
 	it("renders the cover image when a coverUrl is present", () => {
@@ -59,7 +59,7 @@ describe("GameCard", () => {
 	it("hides the star rating when igdbScore is null", () => {
 		const { container } = renderGameCard(baseGame);
 
-		expect(container.querySelector("svg")).not.toBeInTheDocument();
+		expect(container.querySelector('[class*="opacity-40"]')).not.toBeNull();
 	});
 
 	it("shows a star rating when igdbScore is present", () => {

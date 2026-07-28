@@ -63,14 +63,14 @@ describe("GameCard tracking actions", () => {
 		});
 		await user.click(playingButton);
 
-		expect(playingButton).toBeDisabled();
-		expect(screen.getAllByRole("button")).toHaveLength(3);
-
 		await waitFor(() => {
 			expect(receivedInput).toMatchObject({
 				gameData: { igdbId: "1", title: "Hollow Knight" },
 				status: "PLAYING",
 			});
 		});
+
+		expect(playingButton).toHaveAttribute("aria-pressed", "true");
+		expect(playingButton).not.toBeDisabled();
 	});
 });

@@ -15,6 +15,7 @@ vi.mock("@/lib/igdb", () => ({
 	queryIGDB: vi.fn(),
 	resolveCoverUrl: () => null,
 	resolveTrailerVideoId: () => null,
+	resolveScreenshotUrls: () => [],
 }));
 
 interface MockedDb {
