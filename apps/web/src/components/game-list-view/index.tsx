@@ -137,7 +137,7 @@ export function GameListView({
 							{Array.from({ length: GRID_SKELETON_COUNT }).map((_, i) => (
 								// biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list
 								<div key={i}>
-									<Skeleton className="aspect-[3/4] w-full rounded-sm" />
+									<Skeleton className="aspect-3/4 w-full rounded-sm" />
 									<Skeleton className="mt-1 h-4 w-3/4" />
 								</div>
 							))}
