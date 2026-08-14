@@ -47,10 +47,10 @@ export interface GameListViewProps {
 	/** Footer copy shown once every page has loaded. Omit for no message. */
 	endMessage?: string;
 	errorMessage?: string;
-	fetchNextPage: () => void;
+	fetchNextPage?: () => void;
 	games: ReleaseGame[];
-	hasNextPage: boolean;
-	isFetchingNextPage: boolean;
+	hasNextPage?: boolean;
+	isFetchingNextPage?: boolean;
 	/** Viewing someone else's list: show status as a badge, no edit controls. */
 	readOnly?: boolean;
 	status: "error" | "pending" | "success";
@@ -62,8 +62,8 @@ export function GameListView({
 	errorMessage = DEFAULT_ERROR_MESSAGE,
 	fetchNextPage,
 	games,
-	hasNextPage,
-	isFetchingNextPage,
+	hasNextPage = false,
+	isFetchingNextPage = false,
 	readOnly = false,
 	status,
 }: GameListViewProps) {
@@ -96,7 +96,7 @@ export function GameListView({
 	}, [isFetchingNextPage]);
 
 	const requestNextPage = () => {
-		if (!hasNextPage || isRequestingNextPageRef.current) {
+		if (!(fetchNextPage && hasNextPage) || isRequestingNextPageRef.current) {
 			return;
 		}
 		isRequestingNextPageRef.current = true;

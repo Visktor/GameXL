@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { SEARCH_MODES } from "./search-mode";
 
 export const searchQuerySchema = z.string().trim().default("");
-export const searchModeSchema = z.enum(["contains", "fulltext"]);
+export const searchModeSchema = z.enum(SEARCH_MODES);
 export const searchSortBySchema = z.enum([
 	"popularity",
 	"rating",

@@ -7,7 +7,7 @@ import { GameListCard } from "@/components/game-list-card";
 import Loader from "@/components/loader";
 import { authClient } from "@/lib/auth-client";
 import { NotFoundError } from "@/utils/errors";
-import { toReleaseGame } from "@/utils/tracked-game";
+import { toReleaseGame } from "@/utils/release-game";
 import { trpcClient } from "@/utils/trpc";
 
 export default function Profile() {

@@ -142,9 +142,12 @@ export function GamePreviewPanelContent({ igdbId }: { igdbId: string }) {
 						isPending={addMutation.isPending || removeMutation.isPending}
 						onToggle={() => {
 							if (trackedStatus === GAME_STATUSES_ENUM.WISHLIST) {
-								removeMutation.mutate();
+								removeMutation.mutate({ game: data });
 							} else {
-								addMutation.mutate(GAME_STATUSES_ENUM.WISHLIST);
+								addMutation.mutate({
+									game: data,
+									status: GAME_STATUSES_ENUM.WISHLIST,
+								});
 							}
 						}}
 						trackedStatus={trackedStatus ?? null}
@@ -153,8 +156,8 @@ export function GamePreviewPanelContent({ igdbId }: { igdbId: string }) {
 						disabled={addMutation.isPending || removeMutation.isPending}
 						onChange={(trackStatus) =>
 							trackStatus
-								? addMutation.mutate(trackStatus)
-								: removeMutation.mutate()
+								? addMutation.mutate({ game: data, status: trackStatus })
+								: removeMutation.mutate({ game: data })
 						}
 						statuses={TRACK_STATUSES}
 						value={trackedStatus ?? null}

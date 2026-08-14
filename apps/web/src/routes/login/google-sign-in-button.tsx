@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 export default function GoogleSignInButton() {
 	return (
 		<Button
+			accessKey=""
 			className="w-full"
 			onClick={async () => {
 				await authClient.signIn.social(

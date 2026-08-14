@@ -7,49 +7,35 @@ import { SearchGenreFilter } from "@/components/search-genre-filter";
 import { SearchInput } from "@/components/search-input";
 import { SearchNoResults } from "@/components/search-no-results";
 import { SearchRatingFilter } from "@/components/search-rating-filter";
-import type { SearchSortBy } from "@/components/search-sort-select";
 import { SearchSortSelect } from "@/components/search-sort-select";
 import { SearchTrendingSection } from "@/components/search-trending-section";
-import { RATING_SCALE } from "@/constants/rating";
-import { SearchParamsUtils } from "@/utils/search-params";
+import { SEARCH_MODE_OPTIONS } from "@/constants/search-mode";
+import {
+	DEFAULT_SEARCH_FILTERS,
+	type SearchFilters,
+	SearchFilterUtils,
+} from "@/utils/search-filters";
 import { trpcClient } from "@/utils/trpc";
-
-type SearchMode = "contains" | "fulltext";
-
-const SEARCH_MODES: { key: SearchMode; label: string }[] = [
-	{ key: "contains", label: "Contains" },
-	{ key: "fulltext", label: "Full text" },
-];
 
 export default function SearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [clearSignal, setClearSignal] = useState(0);
 
-	const q = searchParams.get("q") ?? "";
-	const mode: SearchMode = (searchParams.get("mode") ??
-		"contains") as SearchMode;
-	const genres = SearchParamsUtils.parseGenres(searchParams.get("genres"));
-	const ratingStars = SearchParamsUtils.parseRatingStars(
-		searchParams.get("rating")
-	);
-	const sortBy: SearchSortBy = (searchParams.get("sortBy") ??
-		"popularity") as SearchSortBy;
+	const { genres, mode, q, ratingStars, sortBy } =
+		SearchFilterUtils.parse(searchParams);
 
-	const isEmptyState =
-		q.length === 0 && genres.length === 0 && ratingStars === 0;
-	const minRating = ratingStars > 0 ? ratingStars * RATING_SCALE : undefined;
+	const isEmptyState = SearchFilterUtils.isEmpty({
+		genres,
+		mode,
+		q,
+		ratingStars,
+		sortBy,
+	});
+	const minRating = SearchFilterUtils.toMinRating(ratingStars);
 
-	const updateSearchParams = (
-		partial: Partial<{
-			genres: string[];
-			mode: SearchMode;
-			q: string;
-			ratingStars: number;
-			sortBy: SearchSortBy;
-		}>
-	) => {
+	const updateFilters = (partial: Partial<SearchFilters>) => {
 		setSearchParams(
-			SearchParamsUtils.buildSearchParams({
+			SearchFilterUtils.toParams({
 				q,
 				mode,
 				genres,
@@ -62,15 +48,7 @@ export default function SearchPage() {
 
 	const handleClearFilters = () => {
 		setClearSignal((n) => n + 1);
-		setSearchParams(
-			SearchParamsUtils.buildSearchParams({
-				q: "",
-				mode,
-				genres: [],
-				ratingStars: 0,
-				sortBy,
-			})
-		);
+		setSearchParams(SearchFilterUtils.toParams(DEFAULT_SEARCH_FILTERS));
 	};
 
 	const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
@@ -98,13 +76,13 @@ export default function SearchPage() {
 				<SearchInput
 					initialQuery={q}
 					key={clearSignal}
-					onQueryChange={(nextQ) => updateSearchParams({ q: nextQ })}
+					onQueryChange={(nextQ) => updateFilters({ q: nextQ })}
 				/>
 
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<SearchGenreFilter
 						onToggle={(genre) =>
-							updateSearchParams({
+							updateFilters({
 								genres: genres.includes(genre)
 									? genres.filter((g) => g !== genre)
 									: [...genres, genre],
@@ -116,23 +94,23 @@ export default function SearchPage() {
 					<div className="flex items-center gap-3">
 						<SearchRatingFilter
 							minRating={ratingStars}
-							onChange={(value) => updateSearchParams({ ratingStars: value })}
+							onChange={(value) => updateFilters({ ratingStars: value })}
 						/>
 						<SearchSortSelect
-							onChange={(value) => updateSearchParams({ sortBy: value })}
+							onChange={(value) => updateFilters({ sortBy: value })}
 							value={sortBy}
 						/>
 						{q.length > 0 && (
 							<div className="flex overflow-hidden rounded-none border">
-								{SEARCH_MODES.map(({ key, label }) => (
+								{SEARCH_MODE_OPTIONS.map(({ value, label }) => (
 									<button
 										className={`px-2.5 py-1 text-xs transition-colors ${
-											mode === key
+											mode === value
 												? "bg-accent font-medium"
 												: "text-muted-foreground hover:bg-accent/50"
 										}`}
-										key={key}
-										onClick={() => updateSearchParams({ mode: key })}
+										key={value}
+										onClick={() => updateFilters({ mode: value })}
 										type="button"
 									>
 										{label}

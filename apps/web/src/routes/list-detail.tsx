@@ -39,7 +39,7 @@ import { SortableListItem } from "@/components/sortable-list-item";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
 import { LIST_SORT_LABELS, LIST_SORT_OPTIONS } from "@/constants/list-sort";
 import { NotFoundError } from "@/utils/errors";
-import { listItemToReleaseGame } from "@/utils/game-list-item";
+import { toReleaseGame } from "@/utils/release-game";
 import {
 	type ReleaseGameSort,
 	sortReleaseGames,
@@ -137,7 +137,7 @@ export default function ListDetail() {
 			if (!listQuery.data) {
 				return;
 			}
-			const releaseGames = listQuery.data.items.map(listItemToReleaseGame);
+			const releaseGames = listQuery.data.items.map(toReleaseGame);
 			const sortedOrder = sortReleaseGames(releaseGames, sort).map(
 				(game) => game.igdbId
 			);
@@ -167,7 +167,7 @@ export default function ListDetail() {
 	}
 
 	const list = listQuery.data;
-	const releaseGames = list.items.map(listItemToReleaseGame);
+	const releaseGames = list.items.map(toReleaseGame);
 
 	return (
 		<main className="h-full overflow-y-auto p-4">

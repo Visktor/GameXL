@@ -53,8 +53,6 @@ export async function mapIgdbGamesWithTrackedStatus(
 		return {
 			igdbId,
 			title: g.name,
-			// Falls back to a screenshot (cropped to the cover's aspect
-			// ratio client-side) when IGDB has no dedicated cover art.
 			coverUrl: resolveCoverUrl(g) ?? resolveScreenshotUrls(g)[0] ?? null,
 			trailerVideoId: resolveTrailerVideoId(g),
 			releaseDate: g.first_release_date ?? null,

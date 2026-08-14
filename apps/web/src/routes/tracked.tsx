@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { GameList } from "@/components/game-list";
 import Loader from "@/components/loader";
-import { toReleaseGame } from "@/utils/tracked-game";
+import { toReleaseGame } from "@/utils/release-game";
 import { trpcClient } from "@/utils/trpc";
 
 export default function Tracked() {

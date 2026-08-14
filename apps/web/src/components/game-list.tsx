@@ -12,9 +12,6 @@ import { GameListView } from "@/components/game-list-view";
 import { GAME_STATUS_META, GAME_STATUSES } from "@/constants/game-status";
 import { sortReleaseGames } from "@/utils/sort-release-games";
 
-// GameList's data is a fully-loaded, non-paginated array — nothing to fetch.
-const NO_OP = () => undefined;
-
 const TABS = ["ALL", ...GAME_STATUSES] as const;
 type TabValue = (typeof TABS)[number];
 
@@ -106,10 +103,7 @@ export function GameList({ games, readOnly = false }: GameListProps) {
 							Nothing here yet.
 						</p>
 					}
-					fetchNextPage={NO_OP}
 					games={visibleGames}
-					hasNextPage={false}
-					isFetchingNextPage={false}
 					readOnly={readOnly}
 					status="success"
 				/>

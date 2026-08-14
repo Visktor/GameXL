@@ -14,8 +14,8 @@ export interface TrackedGameEntry {
 	igdbId: string;
 	igdbScore: number | null;
 	releaseDate: number | null;
-	status: GameStatus;
 	title: string;
+	trackedStatus: GameStatus;
 	trailerVideoId: string | null;
 	updatedAt: number;
 }
@@ -56,7 +56,7 @@ function mapTrackedGame(userGame: {
 			? Math.floor(userGame.game.releaseDate.getTime() / 1000)
 			: null,
 		igdbScore: userGame.game.igdbScore?.toNumber() ?? null,
-		status: userGame.status as GameStatus,
+		trackedStatus: userGame.status as GameStatus,
 		updatedAt: userGame.updatedAt.getTime(),
 	};
 }
