@@ -56,6 +56,7 @@ async function assertClickedCardStaysCentered(page: Page) {
 			platforms: [],
 			summary: null,
 			screenshots: [],
+			similarGames: [],
 		})
 	);
 
