@@ -21,6 +21,7 @@ const HOLLOW_KNIGHT_DETAILS = {
 	platforms: [],
 	summary: null,
 	screenshots: [],
+	similarGames: [],
 };
 
 test("search for a game, open its details page, and track it as Playing", async ({
