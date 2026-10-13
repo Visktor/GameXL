@@ -2,7 +2,6 @@ import { Toaster } from "@GameXL/ui/components/sonner";
 import { TooltipProvider } from "@GameXL/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { motion } from "motion/react";
 import { useEffect } from "react";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router";
 
@@ -44,9 +43,9 @@ function RootLayout() {
 					<div className="grid h-svh grid-rows-[auto_1fr]">
 						<Header />
 						<div className="flex overflow-hidden">
-							<motion.div className="min-w-0 flex-1 overflow-hidden" layout>
+							<div className="min-w-0 flex-1 overflow-hidden">
 								<Outlet />
-							</motion.div>
+							</div>
 							<GamePreviewPanel />
 						</div>
 					</div>

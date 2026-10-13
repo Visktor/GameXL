@@ -1,10 +1,17 @@
 import { DEFAULT_PAGE_SIZE } from "@GameXL/api/utils/pagination";
 import { Skeleton } from "@GameXL/ui/components/skeleton";
 import { useEffect, useRef } from "react";
-import { type ListRange, Virtuoso, VirtuosoGrid } from "react-virtuoso";
+import {
+	type ListRange,
+	Virtuoso,
+	VirtuosoGrid,
+	type VirtuosoGridHandle,
+	type VirtuosoHandle,
+} from "react-virtuoso";
 
 import { GameCard, type ReleaseGame } from "@/components/game-card";
 import { GAME_GRID_CLASSNAME } from "@/constants/game-grid";
+import { useGamePreviewPanelStore } from "@/stores/game-preview-panel-store";
 import { useViewPreferenceStore } from "@/stores/view-preference-store";
 import { ViewToggle } from "./view-toggle";
 
@@ -15,6 +22,8 @@ const SCROLL_OVERSCAN_PX = 800;
 const GRID_SKELETON_COUNT = 20;
 const LIST_SKELETON_COUNT = 12;
 const DEFAULT_ERROR_MESSAGE = "Failed to load games. Please try again.";
+const GRID_SCROLL_SETTLE_ATTEMPTS = 15;
+const GRID_CENTER_TOLERANCE_RATIO = 0.15;
 
 interface LoadMoreContext {
 	endMessage?: string;
@@ -68,6 +77,10 @@ export function GameListView({
 	status,
 }: GameListViewProps) {
 	const layout = useViewPreferenceStore((s) => s.layout);
+	const selectedGameId = useGamePreviewPanelStore((s) => s.selectedGameId);
+	const virtuosoRef = useRef<VirtuosoGridHandle | VirtuosoHandle>(null);
+	const gamesRef = useRef(games);
+	gamesRef.current = games;
 
 	// Warm the browser's image cache for newly-arrived games before their
 	// cards mount, so decode is already done by the time the user scrolls to them.
@@ -79,6 +92,56 @@ export function GameListView({
 			}
 		}
 	}, [games]);
+
+	const gridScrollerRef = useRef<HTMLElement | null>(null);
+
+	useEffect(() => {
+		if (!selectedGameId) {
+			return;
+		}
+		const index = gamesRef.current.findIndex(
+			(game) => game.igdbId === selectedGameId
+		);
+		if (index === -1) {
+			return;
+		}
+		if (layout !== "grid") {
+			virtuosoRef.current?.scrollToIndex({ align: "center", index });
+			return;
+		}
+		const isGridItemCentered = () => {
+			const scroller = gridScrollerRef.current;
+			const item = scroller?.querySelector(`[data-index="${index}"]`);
+			if (!(scroller && item)) {
+				return false;
+			}
+			const scrollerRect = scroller.getBoundingClientRect();
+			const itemRect = item.getBoundingClientRect();
+			const distanceFromCenter = Math.abs(
+				itemRect.top +
+					itemRect.height / 2 -
+					(scrollerRect.top + scrollerRect.height / 2)
+			);
+			return (
+				distanceFromCenter < scrollerRect.height * GRID_CENTER_TOLERANCE_RATIO
+			);
+		};
+		let attemptsRemaining = GRID_SCROLL_SETTLE_ATTEMPTS;
+		let rafId: number;
+		const attemptScroll = () => {
+			if (isGridItemCentered()) {
+				return;
+			}
+			virtuosoRef.current?.scrollToIndex({ align: "center", index });
+			attemptsRemaining -= 1;
+			if (attemptsRemaining <= 0) {
+				return;
+			}
+			rafId = requestAnimationFrame(() => requestAnimationFrame(attemptScroll));
+		};
+		attemptScroll();
+		return () => cancelAnimationFrame(rafId);
+	}, [selectedGameId, layout]);
 
 	// Virtuoso can call rangeChanged (and, on fast scrolls, both rangeChanged
 	// and endReached) more than once before React re-renders with the updated
@@ -184,6 +247,10 @@ export function GameListView({
 						listClassName={GAME_GRID_CLASSNAME}
 						overscan={SCROLL_OVERSCAN_PX}
 						rangeChanged={handleRangeChanged}
+						ref={virtuosoRef as React.Ref<VirtuosoGridHandle>}
+						scrollerRef={(ref) => {
+							gridScrollerRef.current = ref;
+						}}
 						style={{ height: "100%", scrollbarGutter: "stable" }}
 						totalCount={games.length}
 					/>
@@ -208,6 +275,7 @@ export function GameListView({
 							/>
 						)}
 						rangeChanged={handleRangeChanged}
+						ref={virtuosoRef as React.Ref<VirtuosoHandle>}
 						style={{ height: "100%" }}
 						totalCount={games.length}
 					/>
